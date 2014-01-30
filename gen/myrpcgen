@@ -1,0 +1,110 @@
+#!/usr/local/bin/python3.3
+
+import argparse
+import sys
+
+from Constants import VERSION
+from GeneratorBase import GeneratorBase, GeneratorException
+from Parser import Parser, ParserException
+
+# Generators registers themshelves at import.
+
+import JSGenerator
+import PyGenerator
+
+INDENT = 4
+OUTDIR = "."
+
+def main():
+    # Parse command line arguments.
+
+    args = parse_args()
+
+    # Lookup generator.
+
+    gen_name = args.gen_name
+
+    try:
+        gen_class = GeneratorBase.lookup_gen(gen_name)
+    except KeyError:
+        fatal("Generator {} is unknown".format(gen_name))
+
+    # Parse IDL.
+
+    parser = Parser(args.idlfile)
+
+    try:
+        parser.parse()
+    except ParserException as e:
+        fatal("Parsing of IDL file failed: {}".format(e))
+
+    namespaces = parser.get_namespaces()
+    tm = parser.get_tm()
+    methods = parser.get_methods()
+
+    # Generate sources.
+
+    try:
+        namespace = namespaces[gen_name]
+    except KeyError:
+        fatal("Namespace for {} is not defined".format(gen_name))
+
+    gen = gen_class(namespace, tm, methods, args.indent, args.outdir)
+
+    try:
+        gen.gen_types()
+
+        if args.client:
+            gen.gen_client()
+
+        if args.processor:
+            gen.gen_processor()
+    except GeneratorException as e:
+        fatal("Generator failed: {}".format(e))
+
+    sys.exit(0)
+
+def parse_args():
+    # FIXME: argparser, common exit, exitcode, one group
+    # FIXME: display help: generators specific options
+
+    gen_namesf = ", ".join(GeneratorBase.list_gen())
+
+    parser = argparse.ArgumentParser(description = "Compile MyRPC IDL to the specified language.")
+    parser.add_argument("-v", action = "version", version = VERSION)
+    parser.add_argument("-t", dest = "indent",
+                        metavar = "indent",
+                        default = INDENT,
+                        help = "identation character count (default: {})".format(INDENT))
+    parser.add_argument("-d", dest = "outdir", metavar = "outdir",
+                        default = OUTDIR,
+                        help = "output directory for generated files (default: {})".format(OUTDIR))
+    parser.add_argument("-g", dest = "gen_name", required = True,
+                        metavar = "gen",
+                        help = "generator to use (available: {})".format(gen_namesf))
+    parser.add_argument("-C", dest = "client", action = "store_true",
+                        help = "generate client")
+    parser.add_argument("-P", dest = "processor", action = "store_true",
+                        help = "generate processor")
+    parser.add_argument("idlfile")
+
+    args = parser.parse_args()
+
+    try:
+        args.indent = int(args.indent)
+        if args.indent < 1:
+            raise ValueError()
+    except ValueError:
+        fatal("-t must be numeric and >= 1")
+
+    if (not args.client and not args.processor):
+        fatal("-C and/or -P must be given")
+
+    return args
+
+def fatal(msg):
+    print("{}: {}".format(sys.argv[0], msg), file = sys.stderr)
+
+    sys.exit(1)
+
+main()

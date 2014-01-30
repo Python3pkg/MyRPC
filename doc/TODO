@@ -1,0 +1,133 @@
+- lib/py: assert-ek, None check-ek
+- remove myrpc_test.py,js,html
+- py: super().__init__ check
+- py: docstring corrections
+- fastbinary implementation for py
+- buf: bytes, s: string, ch: char, b: byte
+- protected variable usage
+- unicode: encoding errors?
+- unicode: strict?
+- server backend with HTTPClientTransport?
+- handle circular references...
+- struct type: oroklodes?
+- ~/my.cpp-s serializalo megoldas?
+- setter/getter opcio (pl. setter/getter nelkul, direktbe prop allitas)
+- objc: - Once we have native C implementation, then rewrite ObjC runtime as a wrapper.
+
+---
+
+- *Base osztalyok absztraktok? (gen + lib)
+- errorhandling implement!
+  - exc cleanup
+  - msgtype
+  - clientside...
+
+- Atolvasas
+  - pygenerator
+  - processorsubr.py
+
+---
+
+- Tehat
+  - processorsubr: error handling, azutan clientsubr error handling
+  - py atolv
+  - \n\n problema...
+  - a types-ben egyes tipusok lehetnenek _-el kezdodni
+
+- Doc
+  - compat/strict mode application note (pl. rpc verziozas, kliens update, stb.)
+
+- Cel
+  - correct input validation!
+
+- Altalanos
+  - try+catch or explicit check? 
+  - (...) konstrukciokat atnezni, js-ben is! ([0], [1], .prop helyett)
+  - kommentek atnezese
+  - internalexception helyett assert (pl. myrpcgen-ben)
+  - py: importok ellenorzese (csak az legyen importalva ami kell)
+  - hibauzik atnezese/javitasa mindenhol
+  - codec: binary/string/list size checks?
+  - exception hier is flat: jo ez igy?
+  - Types szetvalasztas kliens ill. szerver oldalra?
+  - MessageTypeException inkabb CodecException?
+  - Elegge szigoru a proto impl. Esetleg konnyites?
+
+- *Generator
+  - optimalizalt kodgeneralas, ha nincs pl. return type, vagy a metodus nem dob exceptiont
+    - exc_handler, struct.read, struct.write
+    - pygenerator
+  - null elemek a listben?
+  - struct/exc/list embed info in seri/deseriexception
+
+- BinaryCodec.js
+  - StringView hasznalata
+
+- JSGenerator
+  - more correct error reporting on deserialize errors of struct/exc/methods...
+  - more compat error reporting? (tul sok a duplikalt string...)
+  - validate_ns dup with PyGenerator
+
+- Parser
+  - stream oriented syntax, like c
+  - datum, enum type
+  - warn on not used exc, types, structs, etc...
+  - docstring handle -> written into generated code
+  - eliminate redundant types (pl. list lista1 string, list lista2 string)
+
+- BinaryCodec
+  - uzenetvege marker?
+  - js: max/min int: http://blog.vjeux.com/2010/javascript/javascript-max_int-number-limits.html
+  - protocol versioning
+
+- js
+  - var deklaraciok mindig a func elejen!
+
+- HTTPClientTransport
+  - HTTPClientTransport specific exc?
+  - useragent
+  - setting: set_state check?
+  - set_state semantic implementation
+
+---
+
+Progress:
+ - 2014. 01. 26.]: parser clean, jsgenerator clean, tesztelessel egyutt + mukodnie kell (pl. call, call (continue nelkul), abort teszt)
+ - 2014. 01. [27: python server side implementation
+   - exceptionoknak az Exception osztalybol kell szarmazniuk
+   - types: 1xu pkg1(dir).pkg2(dir).mod(file)->symbol
+     - 
+     - pkg1(dir)/pkg2(dir)/Client.py
+       |                /
+           namespace
+           __init__.py-ket letre kell hozni
+       -> class Client:
+     - pkg1(dir)/pkg2(dir)/Types.py
+       -> class, def...
+     - pkg1(dir)/pkg2(dir)/Server.py...
+
+- typemanager
+  - EnumType
+    - identifierek unique
+    - ertek lehet azonos!
+    - ertek opcionalis
+
+- Parser
+
+- JSGenerator
+  - self._register_dtype_kinds(dtype_kinds) -> ENUM
+  - _dtype_kind_enum_(gen|read|write)
+    - gen:
+      - pl. class VAGY SIMAN fgvnyek! -> majd meglatjuk...
+      - constr: this._values = { 1, 2, 3, 4, 5, 6, 7, ... };
+      - .read(codec)
+      - .write(codec, v)
+      - ._validate(is_read)
+    - read:
+      - obj = new class();
+      - obj.read(codec);
+    - write:
+      - obj = new class();
+      - obj.write(codec);
+
+- CodecBase: ENUM hozzaadas!

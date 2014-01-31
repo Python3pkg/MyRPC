@@ -2,7 +2,7 @@ import io
 
 from myrpc.transport.TransportBase import TransportState, TransportBase, TransportException
 
-class BytesIOTransport(TransportBase):
+class MemoryTransport(TransportBase):
     """Provide memory-buffered transport."""
 
     def __init__(self, buf = None):

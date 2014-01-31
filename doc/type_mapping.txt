@@ -6,11 +6,11 @@ bool           FIXME (True, False)          boolean (true, false)
 ui8            int                          number
 ui16           int                          number
 ui32           int                          number
-ui64           int                          number
+ui64           int                          number *5
 i8             int                          number
 i16            int                          number
 i32            int                          number
-i64            int                          number
+i64            int                          number *5
 float          float                        number
 double         float                        number
 enum           *1                           *3
@@ -40,3 +40,7 @@ typename = {
 
 typename = function()
 ... set/get
+
+*5)
+
+http://blog.vjeux.com/2010/javascript/javascript-max_int-number-limits.html

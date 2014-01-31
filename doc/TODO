@@ -13,18 +13,22 @@
 - ~/my.cpp-s serializalo megoldas?
 - setter/getter opcio (pl. setter/getter nelkul, direktbe prop allitas)
 - objc: - Once we have native C implementation, then rewrite ObjC runtime as a wrapper.
+- FIXME: rename BytesIOTransport to MemoryTransport?
+- website: live demo, pl. kepfeltolto... + forraskod + doc
 
 ---
 
-- *Base osztalyok absztraktok? (gen + lib)
-- errorhandling implement!
-  - exc cleanup
-  - msgtype
-  - clientside...
+Amit meg a 7vegen meg kell csinalnom:
+ - *Base osztalyok absztraktok? (gen + lib)?
+ - errorhandling implement!
+   - exc cleanup
+   - msgtype
+   - clientside...
 
-- Atolvasas
-  - pygenerator
-  - processorsubr.py
+- Azutan:
+  - FIXME javitas
+  - pygenerator atolv
+  - processorsubr.py atolv
 
 ---
 
@@ -38,7 +42,9 @@
   - compat/strict mode application note (pl. rpc verziozas, kliens update, stb.)
 
 - Cel
-  - correct input validation!
+  - correct input validation
+  - binarycodec is supported on all platforms
+  - all datatypes are supported on all platforms (w/ limitations)
 
 - Altalanos
   - try+catch or explicit check? 
@@ -79,9 +85,12 @@
   - uzenetvege marker?
   - js: max/min int: http://blog.vjeux.com/2010/javascript/javascript-max_int-number-limits.html
   - protocol versioning
+  - compressed datatype (pl. datatype for zero length strings, or 1 <= len <= 256, stb.)
+  - FIXME: struct.error: int too large to convert, (py)
 
 - js
   - var deklaraciok mindig a func elejen!
+  - 64 bites hack talan lehetne egyszerubb?
 
 - HTTPClientTransport
   - HTTPClientTransport specific exc?

@@ -1,13 +1,11 @@
-# FIXME: error reporting: send packet back or throw exc? milyen exc-eket dobhat a process_one?
-# FIXME: error handling: set transport state on error?
-# FIXME: hibalehetoseg method_handlers exceptiont dob (pl. KeyError) akkor azt mi lehet hogy felreertelmezzuk...
 # FIXME: importok atnezese...
 # FIXME: ne kelljen mindig uj Processor obj ha a tr/codec valtozik
 # FIXME: HandlerReturn state check
+# FIXME: handle exc check, mit dobhat? nehogy osszekeveredjunk...
 
-from myrpc.Common import MyRPCInternalException, MessageTypeException
+from myrpc.Common import MyRPCInternalException, DeserializeException, MessageHeaderException
 from myrpc.transport.TransportBase import TransportState
-from myrpc.codec.CodecBase import MessageType, CallResponseMessage, CallExceptionMessage
+from myrpc.codec.CodecBase import MessageType, CallResponseMessage, CallExceptionMessage, ErrorMessage
 
 class HandlerReturn:
     """Handler return value class."""
@@ -41,9 +39,23 @@ class ProcessorSubr:
         self._codec.set_transport(tr)
 
     def process_one(self):
-        # Read one packet.
-
         self._reset()
+
+        try:
+            self._process_one()
+        except DeserializeException as e:
+            # Handle deserializer errors.
+
+            err_msg = e.get_msg()
+            msg = ErrorMessage(err_msg)
+
+            self._tr.set_state(TransportState.WRITE_BEGIN)
+            self._codec.write_message_begin(msg)
+            self._codec.write_message_end()
+            self._tr.set_state(TransportState.WRITE_END)
+
+    def _process_one(self):
+        # Read one packet.
 
         self._tr.set_state(TransportState.READ_BEGIN)
 
@@ -54,7 +66,7 @@ class ProcessorSubr:
             name = msg.get_name()
             self._process_CALL_REQUEST_read(name)
         else:
-            raise MessageTypeException("Unexpected message type received {}".format(mtype))
+            raise MessageHeaderException("Unexpected message type {}".format(mtype))
 
         self._codec.read_message_end()
 
@@ -73,7 +85,7 @@ class ProcessorSubr:
         try:
             handler = self._handlers[name]
         except KeyError:
-            raise MessageTypeException("Invalid method name received {}".format(name)) # FIXME: nem ideillo exctype
+            raise MessageHeaderException("Unknown method name {}".format(name))
 
         self._curr_return = handler(self._codec)
 

@@ -1,7 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-from myrpc.Common import MyRPCException
-
 FID_STOP = 0xffff
 
 class MessageType:
@@ -11,11 +9,13 @@ class MessageType:
      - CALL_REQUEST: call method request.
      - CALL_RESPONSE: reply to CALL_REQUEST, successful method call.
      - CALL_EXCEPTION: reply to CALL_REQUEST, exception thrown during execution.
+     - ERROR: reply to all client messages, used for error reporting.
     """
 
     (CALL_REQUEST,
      CALL_RESPONSE,
-     CALL_EXCEPTION) = range(3)
+     CALL_EXCEPTION,
+     ERROR) = range(4)
 
 class DataType:
     """Data type enum."""
@@ -78,6 +78,17 @@ class CallExceptionMessage(MessageBase):
 
     def get_name(self):
         return self._name
+
+class ErrorMessage(MessageBase):
+    """ERROR message (err_msg: error message)."""
+
+    def __init__(self, err_msg):
+        super().__init__(MessageType.ERROR)
+
+        self._err_msg = err_msg
+
+    def get_err_msg(self):
+        return self._err_msg
 
 class CodecBase(metaclass = ABCMeta):
     """Base class for codec implementation classes.
@@ -266,9 +277,3 @@ class CodecBase(metaclass = ABCMeta):
     @abstractmethod
     def write_double(self, f):
         pass
-
-class CodecException(MyRPCException):
-    """Base class for codec exception classes."""
-
-    def __init__(self, msg):
-        super().__init__(msg)

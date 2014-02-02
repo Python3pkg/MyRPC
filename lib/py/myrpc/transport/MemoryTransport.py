@@ -1,6 +1,7 @@
 import io
 
-from myrpc.transport.TransportBase import TransportState, TransportBase, TransportException
+from myrpc.Common import MessageTruncatedException
+from myrpc.transport.TransportBase import TransportState, TransportBase
 
 class MemoryTransport(TransportBase):
     """Provide memory-buffered transport."""
@@ -25,7 +26,7 @@ class MemoryTransport(TransportBase):
     def read(self, count):
         buf = self._rf.read(count)
         if len(buf) < count:
-            raise TransportException("EOF is reached")
+            raise MessageTruncatedException()
 
         return buf
 

@@ -321,9 +321,9 @@ class PyGenerator(GeneratorBase):
         sb.wl("\t\tmsg = \"Enum {} unknown value {{}}\".format(v)".format(dtype_name))
         sb.we()
         sb.wl("\t\tif is_read:")
-        sb.wl("\t\t\traise myrpc.Common.DeserializerException(msg)")
+        sb.wl("\t\t\traise myrpc.Common.MessageDecodeException(msg)")
         sb.wl("\t\telse:")
-        sb.wl("\t\t\traise myrpc.Common.SerializerException(msg)")
+        sb.wl("\t\t\traise myrpc.Common.SerializeException(msg)")
         sb.we()
 
         return sb.get_string()
@@ -358,7 +358,7 @@ class PyGenerator(GeneratorBase):
         sb.wl("\t(llen, dtype) = codec.read_list_begin()")
         sb.we()
         sb.wl("\tif dtype != {}:".format(codec_dtype_classn))
-        sb.wl("\t\traise myrpc.Common.DeserializerException(\"List {} has unexpected elem data type {{}}\".format(dtype))".format(dtype_name))
+        sb.wl("\t\traise myrpc.Common.MessageDecodeException(\"List {} has unexpected elem data type {{}}\".format(dtype))".format(dtype_name))
         sb.we()
         sb.wl("\tl = []")
         sb.we()
@@ -492,11 +492,11 @@ class PyGenerator(GeneratorBase):
             sb.wl("\t\t\telse:")
             indent += "\t"
 
-        sb.wl("{}raise myrpc.Common.DeserializerException(\"Struct {} unknown fid {{}}\".format(fid))".format(indent, dtype_name))
+        sb.wl("{}raise myrpc.Common.MessageDecodeException(\"Struct {} unknown fid {{}}\".format(fid))".format(indent, dtype_name))
 
         sb.we()
         sb.wl("\t\t\tif err:")
-        sb.wl("\t\t\t\traise myrpc.Common.DeserializerException(\"Struct {} fid {{}} has unexpected data type {{}}\".format(fid, dtype))".format(dtype_name))
+        sb.wl("\t\t\t\traise myrpc.Common.MessageDecodeException(\"Struct {} fid {{}} has unexpected data type {{}}\".format(fid, dtype))".format(dtype_name))
         sb.we()
         sb.wl("\t\t\tcodec.read_field_end()")
         sb.we()
@@ -561,9 +561,9 @@ class PyGenerator(GeneratorBase):
             sb.wl("\t\t\tmsg = \"Struct {} field {{}} is None\".format(name)".format(dtype_name))
             sb.we()
             sb.wl("\t\t\tif is_read:")
-            sb.wl("\t\t\t\traise myrpc.Common.DeserializerException(msg)")
+            sb.wl("\t\t\t\traise myrpc.Common.MessageDecodeException(msg)")
             sb.wl("\t\t\telse:")
-            sb.wl("\t\t\t\traise myrpc.Common.SerializerException(msg)")
+            sb.wl("\t\t\t\traise myrpc.Common.SerializeException(msg)")
             sb.we()
 
         return sb.get_string()

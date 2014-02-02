@@ -56,8 +56,9 @@ Amit meg a 7vegen meg kell csinalnom:
   - codec: binary/string/list size checks?
   - exception hier is flat: jo ez igy?
   - Types szetvalasztas kliens ill. szerver oldalra?
-  - MessageTypeException inkabb CodecException?
   - Elegge szigoru a proto impl. Esetleg konnyites?
+  - ERROR message: include errortype?
+  - JS: csak a callback-ban dobunk hibat vagy a client.call_method-ban is mar?
 
 - *Generator
   - optimalizalt kodgeneralas, ha nincs pl. return type, vagy a metodus nem dob exceptiont

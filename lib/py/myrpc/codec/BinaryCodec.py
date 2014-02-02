@@ -1,7 +1,7 @@
 import struct
 
-from myrpc.Common import MyRPCInternalException
-from myrpc.codec.CodecBase import FID_STOP, MessageType, DataType, CallRequestMessage, CallResponseMessage, CallExceptionMessage, CodecBase, CodecException
+from myrpc.Common import MyRPCInternalException, MessageHeaderException, MessageDecodeException
+from myrpc.codec.CodecBase import FID_STOP, MessageType, DataType, CallRequestMessage, CallResponseMessage, CallExceptionMessage, ErrorMessage, CodecBase
 
 _SIGNATURE = 0x19800411
 _ENCODING = "utf-8"
@@ -25,7 +25,7 @@ class BinaryCodec(CodecBase):
     def read_message_begin(self):
         signature = self.read_ui32()
         if signature != _SIGNATURE:
-            raise CodecException("Invalid message header")
+            raise MessageHeaderException("Invalid message signature")
 
         mtype = self.read_ui8()
         if mtype == MessageType.CALL_REQUEST:
@@ -36,8 +36,11 @@ class BinaryCodec(CodecBase):
         elif mtype == MessageType.CALL_EXCEPTION:
             name = self.read_string()
             msg = CallExceptionMessage(name)
+        elif mtype == MessageType.ERROR:
+            err_msg = self.read_string()
+            msg = ErrorMessage(err_msg)
         else:
-            raise CodecException("Invalid message type {}".format(mtype))
+            raise MessageHeaderException("Unknown message type {}".format(mtype))
 
         return msg
 
@@ -55,6 +58,9 @@ class BinaryCodec(CodecBase):
         elif mtype == MessageType.CALL_EXCEPTION:
             name = msg.get_name()
             self.write_string(name)
+        elif mtype == MessageType.ERROR:
+            err_msg = msg.get_err_msg()
+            self.write_string(err_msg)
         else:
             raise MyRPCInternalException("Unknown message type ".format(mtype))
 
@@ -130,7 +136,7 @@ class BinaryCodec(CodecBase):
         try:
             s = buf.decode(_ENCODING)
         except UnicodeError:
-            raise CodecException("Can't decode unicode string")
+            raise MessageDecodeException("Can't decode unicode string")
 
         return s
 
@@ -229,7 +235,7 @@ class BinaryCodec(CodecBase):
     def _read_dtype(self):
         dtype = self.read_ui8()
         if dtype >= DataType._MAX:
-            raise CodecException("Invalid data type {}".format(dtype))
+            raise MessageDecodeException("Unknown data type {}".format(dtype))
 
         return dtype
 

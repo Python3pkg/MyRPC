@@ -1,9 +1,9 @@
 # FIXME: bh generation for methods -> Client.js utanahuzas
 # FIXME: exc seri -> throw method, es akkor dobja ez a kivetelt (throw polimorphically...) -> Client.js utanahuzas
 # FIXME: struct_read: duplicate fid handle!
-# FIXME: read/write oldali exc szetvalasztas? (mashol is) -> elgondolkodas...
 # FIXME: privat functionok/classname-k? (pl. _myrpc...?)
 # FIXME: myrpc namespace -> error lesz belole
+# FIXME: getter, setter: this conflict! + kw conflict!
 
 import re
 
@@ -180,7 +180,7 @@ class JSGenerator(GeneratorBase):
 
                 sb.wl("\t\tcase \"{}\":".format(exc_name))
 
-                s = self._gtm.read_dtype(exc, "this._exc") # FIXME
+                s = self._gtm.read_dtype(exc, "this._exc")
                 sb.wlsindent("\t\t\t", s)
 
                 sb.wl("\t\t\tbreak;")

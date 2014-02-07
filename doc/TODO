@@ -1,5 +1,4 @@
 - lib/py: assert-ek, None check-ek
-- remove myrpc_test.py,js,html
 - py: super().__init__ check
 - py: docstring corrections
 - fastbinary implementation for py
@@ -8,27 +7,31 @@
 - unicode: encoding errors?
 - unicode: strict?
 - server backend with HTTPClientTransport?
-- handle circular references...
+- handle circular references
 - struct type: oroklodes?
-- ~/my.cpp-s serializalo megoldas?
+- my.cpp-s serializalo megoldas?
 - setter/getter opcio (pl. setter/getter nelkul, direktbe prop allitas)
 - objc: - Once we have native C implementation, then rewrite ObjC runtime as a wrapper.
-- FIXME: rename BytesIOTransport to MemoryTransport?
-- website: live demo, pl. kepfeltolto... + forraskod + doc
+- website: live demo, pl. kepfeltolto... + forraskod + doc + kulcsrakesz kliensek!
+
+- binary capable (no base64, whatever encoding)
+- lang api-s are similar
+- js/nodejs
+- single roundtrip
+- circular references not supported yet
+- jsclient: browser, jsserver: nodejs
 
 ---
 
-Amit meg a 7vegen meg kell csinalnom:
- - *Base osztalyok absztraktok? (gen + lib)?
- - errorhandling implement!
-   - exc cleanup
-   - msgtype
-   - clientside...
-
 - Azutan:
   - FIXME javitas
+  - seriexc -> encodexc?
+  - deseriexc -> decodeexc?
+  - jsclient: delayed exc handler
+  - nodejs server modul? (+ examples client es szerverhez)
   - pygenerator atolv
   - processorsubr.py atolv
+  - *Base osztalyok absztraktok? (gen + lib)?
 
 ---
 
@@ -61,11 +64,11 @@ Amit meg a 7vegen meg kell csinalnom:
   - JS: csak a callback-ban dobunk hibat vagy a client.call_method-ban is mar?
 
 - *Generator
-  - optimalizalt kodgeneralas, ha nincs pl. return type, vagy a metodus nem dob exceptiont
-    - exc_handler, struct.read, struct.write
-    - pygenerator
+  - optimalizalt kodgeneralas, ha 
+    - nincs pl. return type, vagy args
+    - a metodus nem dob exceptiont
+    - esetleg Types szetvalasztas (hogy mit generaljon le)
   - null elemek a listben?
-  - struct/exc/list embed info in seri/deseriexception
 
 - BinaryCodec.js
   - StringView hasznalata
@@ -77,7 +80,7 @@ Amit meg a 7vegen meg kell csinalnom:
 
 - Parser
   - stream oriented syntax, like c
-  - datum, enum type
+  - date, time type
   - warn on not used exc, types, structs, etc...
   - docstring handle -> written into generated code
   - eliminate redundant types (pl. list lista1 string, list lista2 string)
@@ -99,13 +102,9 @@ Amit meg a 7vegen meg kell csinalnom:
   - setting: set_state check?
   - set_state semantic implementation
 
----
-
-Progress:
- - 2014. 01. 26.]: parser clean, jsgenerator clean, tesztelessel egyutt + mukodnie kell (pl. call, call (continue nelkul), abort teszt)
- - 2014. 01. [27: python server side implementation
-   - exceptionoknak az Exception osztalybol kell szarmazniuk
-   - types: 1xu pkg1(dir).pkg2(dir).mod(file)->symbol
+py:
+   - exceptionoknak az Exception osztalybol kell szarmazniuk: ok
+   - py: types: 1xu pkg1(dir).pkg2(dir).mod(file)->symbol: todo
      - 
      - pkg1(dir)/pkg2(dir)/Client.py
        |                /
@@ -115,29 +114,3 @@ Progress:
      - pkg1(dir)/pkg2(dir)/Types.py
        -> class, def...
      - pkg1(dir)/pkg2(dir)/Server.py...
-
-- typemanager
-  - EnumType
-    - identifierek unique
-    - ertek lehet azonos!
-    - ertek opcionalis
-
-- Parser
-
-- JSGenerator
-  - self._register_dtype_kinds(dtype_kinds) -> ENUM
-  - _dtype_kind_enum_(gen|read|write)
-    - gen:
-      - pl. class VAGY SIMAN fgvnyek! -> majd meglatjuk...
-      - constr: this._values = { 1, 2, 3, 4, 5, 6, 7, ... };
-      - .read(codec)
-      - .write(codec, v)
-      - ._validate(is_read)
-    - read:
-      - obj = new class();
-      - obj.read(codec);
-    - write:
-      - obj = new class();
-      - obj.write(codec);
-
-- CodecBase: ENUM hozzaadas!

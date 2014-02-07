@@ -1,10 +1,10 @@
 # FIXME: jelenleg meg ne csinaljunk namespace alkonyvtarakat (__init__.py all import)
 # FIXME: put PyGenerator+JSGenerator common code to GeneratorBase
 # FIXME: privat functionok/classname-k? (pl. _myrpc...?)
-# FIXME: setter, getter self conflict!
-# FIXME: namespace crash pl. serializerexception es ugyanilyen neven fut az idl-ben egy tipus...
+# FIXME: getter, setter: self conflict! + kw conflict!
 # FIXME: myrpc namespace: gond lehet belole...
 # FIXME: indent usage... (js is)
+# FIXME: struct_read: duplicate fid handle!
 
 import re
 

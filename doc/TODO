@@ -24,19 +24,17 @@
 ---
 
 - Azutan:
+  - pygenerator atolv!!!
+
   - FIXME javitas
   - seriexc -> encodexc?
   - deseriexc -> decodeexc?
   - jsclient: delayed exc handler
   - nodejs server modul? (+ examples client es szerverhez)
-  - pygenerator atolv
-  - processorsubr.py atolv
-  - *Base osztalyok absztraktok? (gen + lib)?
 
 ---
 
 - Tehat
-  - processorsubr: error handling, azutan clientsubr error handling
   - py atolv
   - \n\n problema...
   - a types-ben egyes tipusok lehetnenek _-el kezdodni

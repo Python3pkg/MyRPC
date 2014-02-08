@@ -38,13 +38,14 @@ class DataType:
      STRUCT,
      _MAX) = range(17)
 
-class MessageBase:
+class MessageBase(metaclass = ABCMeta):
     """Base class for messages.
 
     Message classes represent only information, the actual
     (de)serialization is done in codec implementation classes.
     """
 
+    @abstractmethod
     def __init__(self, mtype):
         self._mtype = mtype
 

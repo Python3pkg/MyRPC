@@ -1,7 +1,5 @@
-# FIXME: importok atnezese...
 # FIXME: ne kelljen mindig uj Processor obj ha a tr/codec valtozik
 # FIXME: HandlerReturn state check
-# FIXME: handle exc check, mit dobhat? nehogy osszekeveredjunk...
 
 from myrpc.Common import MyRPCInternalException, DeserializeException, MessageHeaderException
 from myrpc.transport.TransportBase import TransportState
@@ -63,8 +61,7 @@ class ProcessorSubr:
         mtype = msg.get_mtype()
 
         if mtype == MessageType.CALL_REQUEST:
-            name = msg.get_name()
-            self._process_CALL_REQUEST_read(name)
+            self._process_CALL_REQUEST_read(msg)
         else:
             raise MessageHeaderException("Unexpected message type {}".format(mtype))
 
@@ -81,11 +78,25 @@ class ProcessorSubr:
 
         self._tr.set_state(TransportState.WRITE_END)
 
-    def _process_CALL_REQUEST_read(self, name):
+    def _process_CALL_REQUEST_read(self, msg):
+        name = msg.get_name()
+
         try:
             handler = self._handlers[name]
         except KeyError:
             raise MessageHeaderException("Unknown method name {}".format(name))
+
+        # Be careful when calling handler: any exception raised (either directly
+        # or indirectly) in handler has to propagate thru without catching it. This
+        # ensures that the caller of ProcessorSubr.process_one gets noticed about the
+        # exception (which is an error condition).
+        #
+        # However:
+        #  - Exceptions defined in IDL are catched in handler, this is the normal
+        #    behaviour.
+        #  - DeserializeException is catched in ProcessorSubr.process_one, and it
+        #    means that we can't decode the message. An ErrorMessage will be sent
+        #    back to the client in this case.
 
         self._curr_return = handler(self._codec)
 

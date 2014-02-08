@@ -1,3 +1,5 @@
+from abc import ABCMeta, abstractmethod
+
 from ParserInternalException import ParserInternalException
 from InternalException import InternalException
 
@@ -26,9 +28,10 @@ class DataTypeKind:
      STRUCT,
      EXC) = range(17)
 
-class TypeBase:
+class TypeBase(metaclass = ABCMeta):
     """Base class of all data types."""
 
+    @abstractmethod
     def __init__(self, name, dtype_kind):
         self._name = name
         self._dtype_kind = dtype_kind

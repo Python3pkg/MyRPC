@@ -3,7 +3,8 @@ import struct
 from myrpc.Common import MyRPCInternalException, MessageHeaderException, MessageDecodeException
 from myrpc.codec.CodecBase import FID_STOP, MessageType, DataType, CallRequestMessage, CallResponseMessage, CallExceptionMessage, ErrorMessage, CodecBase
 
-_SIGNATURE = 0x19800411
+_SIGNATURE = 0x5341
+_VERSION = 0x0001
 _ENCODING = "utf-8"
 _FORMAT = {"B": 1,
            "H": 2,
@@ -23,9 +24,13 @@ class BinaryCodec(CodecBase):
         super().__init__()
 
     def read_message_begin(self):
-        signature = self.read_ui32()
+        signature = self.read_ui16()
         if signature != _SIGNATURE:
             raise MessageHeaderException("Invalid message signature")
+
+        version = self.read_ui16()
+        if version != _VERSION:
+            raise MessageHeaderException("Unknown message version")
 
         mtype = self.read_ui8()
         if mtype == MessageType.CALL_REQUEST:
@@ -47,7 +52,8 @@ class BinaryCodec(CodecBase):
     def write_message_begin(self, msg):
         mtype = msg.get_mtype()
 
-        self.write_ui32(_SIGNATURE)
+        self.write_ui16(_SIGNATURE)
+        self.write_ui16(_VERSION)
         self.write_ui8(mtype)
 
         if mtype == MessageType.CALL_REQUEST:

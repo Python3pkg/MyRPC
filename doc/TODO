@@ -20,6 +20,7 @@
 - single roundtrip
 - circular references not supported yet
 - jsclient: browser, jsserver: nodejs
+- unified web/mobile access
 
 ---
 
@@ -29,7 +30,6 @@
   - FIXME javitas
   - seriexc -> encodexc?
   - deseriexc -> decodeexc?
-  - jsclient: delayed exc handler
   - nodejs server modul? (+ examples client es szerverhez)
 
 ---
@@ -38,6 +38,7 @@
   - py atolv
   - \n\n problema...
   - a types-ben egyes tipusok lehetnenek _-el kezdodni
+  - rettype struct helyett valami mas (most azert struct, mert a ret lehet null)
 
 - Doc
   - compat/strict mode application note (pl. rpc verziozas, kliens update, stb.)
@@ -55,7 +56,6 @@
   - py: importok ellenorzese (csak az legyen importalva ami kell)
   - hibauzik atnezese/javitasa mindenhol
   - codec: binary/string/list size checks?
-  - exception hier is flat: jo ez igy?
   - Types szetvalasztas kliens ill. szerver oldalra?
   - Elegge szigoru a proto impl. Esetleg konnyites?
   - ERROR message: include errortype?
@@ -86,13 +86,11 @@
 - BinaryCodec
   - uzenetvege marker?
   - js: max/min int: http://blog.vjeux.com/2010/javascript/javascript-max_int-number-limits.html
-  - protocol versioning
   - compressed datatype (pl. datatype for zero length strings, or 1 <= len <= 256, stb.)
   - FIXME: struct.error: int too large to convert, (py)
 
 - js
   - var deklaraciok mindig a func elejen!
-  - 64 bites hack talan lehetne egyszerubb?
 
 - HTTPClientTransport
   - HTTPClientTransport specific exc?

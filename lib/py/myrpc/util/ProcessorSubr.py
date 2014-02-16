@@ -29,10 +29,10 @@ class HandlerReturn:
 class ProcessorSubr:
     """Processor class for server applications."""
 
-    def __init__(self, tr, codec, handlers):
+    def __init__(self, tr, codec, methodmap):
         self._tr = tr
         self._codec = codec
-        self._handlers = handlers
+        self._methodmap = methodmap
 
         self._codec.set_transport(tr)
 
@@ -53,7 +53,7 @@ class ProcessorSubr:
             self._tr.set_state(TransportState.WRITE_END)
 
     def _process_one(self):
-        # Read one packet.
+        # Read one message.
 
         self._tr.set_state(TransportState.READ_BEGIN)
 
@@ -82,10 +82,22 @@ class ProcessorSubr:
         name = msg.get_name()
 
         try:
-            handler = self._handlers[name]
+            (args_seri_create, handler) = self._methodmap[name]
         except KeyError:
             raise MessageHeaderException("Unknown method name {}".format(name))
 
+        # Deserialize method arguments. The actual method call will be happen in
+        # _process_CALL_REQUEST_write.
+
+        args_seri = args_seri_create()
+        args_seri.read(self._codec)
+
+        self._args_seri = args_seri
+        self._handler = handler
+
+        self._set_process_cb(self._process_CALL_REQUEST_write)
+
+    def _process_CALL_REQUEST_write(self):
         # Be careful when calling handler: any exception raised (either directly
         # or indirectly) in handler has to propagate thru without catching it. This
         # ensures that the caller of ProcessorSubr.process_one gets noticed about the
@@ -98,13 +110,10 @@ class ProcessorSubr:
         #    means that we can't decode the message. An ErrorMessage will be sent
         #    back to the client in this case.
 
-        self._curr_return = handler(self._codec)
+        hr = self._handler(self._args_seri)
 
-        self._set_process_cb(self._process_CALL_REQUEST_write)
-
-    def _process_CALL_REQUEST_write(self):
-        (exc, exc_name) = self._curr_return.get_exc()
-        r = self._curr_return.get_result()
+        (exc, exc_name) = hr.get_exc()
+        r = hr.get_result()
 
         if exc:
             msg = CallExceptionMessage(exc_name)
@@ -121,7 +130,8 @@ class ProcessorSubr:
 
     def _reset(self):
         self._set_process_cb(None)
-        self._curr_return = None
+        self._args_seri = None
+        self._handler = None
 
     def _get_process_cb(self):
         return self._process_cb

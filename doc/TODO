@@ -21,12 +21,13 @@
 - circular references not supported yet
 - jsclient: browser, jsserver: nodejs
 - unified web/mobile access
+- support exc throw w/ normal calling convention (myrpc_continue)
+- delayed exc handling (myrpc_continue)
 
 ---
 
 - Azutan:
-  - pygenerator atolv!!!
-
+  - Amit meg kell: pygenerator atolv!!!
   - FIXME javitas
   - seriexc -> encodexc?
   - deseriexc -> decodeexc?
@@ -35,6 +36,32 @@
 ---
 
 - Tehat
+  - httpclient: keepalive kuldes
+  - processor.py: longpolling support + wikipedia link + tornado example
+
+IMPL:
+
+class Impl {
+  void osszead(int a, int b); // top half
+  int myrpc_continue_osszead(); // bottom half
+}
+
+ONREAD_FINISHED:
+
+proc = new Processor(new Impl())
+proc.process_one_async(tr,codec)
+if (proc->finished()) // Read failed
+   return;
+
+(in Impl: register(op, proc))
+
+ONPROC_FINISHED:
+
+proc->process_continue(); // call Impl->myrpc_continue_osszead(...);
+// Read transport wbuf + send it.
+// Release proc.
+
+  - long polling demo?
   - py atolv
   - \n\n problema...
   - a types-ben egyes tipusok lehetnenek _-el kezdodni

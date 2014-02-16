@@ -147,19 +147,19 @@ class PyGenerator(GeneratorBase):
         sb.wl("\t\tself._impl = impl")
         sb.we()
 
-        sb.wl("\t\thandlers = {")
+        sb.wl("\t\tmethodmap = {")
 
         lasti = len(methods) - 1
 
         for (i, method) in enumerate(methods):
             name = method.get_name()
 
-            sb.wl("\t\t\t\"{0}\": self._handle_{0}{1}".format(name, "," if i < lasti else ""))
+            sb.wl("\t\t\t\"{0}\": (self._args_seri_create_{0}, self._handle_{0}){1}".format(name, "," if i < lasti else ""))
 
         sb.wl("\t\t}")
         sb.we()
 
-        sb.wl("\t\tself._proc = ProcessorSubr(tr, codec, handlers)")
+        sb.wl("\t\tself._proc = ProcessorSubr(tr, codec, methodmap)")
         sb.we()
 
         sb.wl("\tdef process_one(self):")
@@ -174,10 +174,13 @@ class PyGenerator(GeneratorBase):
             args_seri_classn = self._get_args_seri_classn(name, classn_prefix)
             result_seri_classn = self._get_result_seri_classn(name, classn_prefix)
 
-            sb.wl("\tdef _handle_{}(self, codec):".format(name))
+            sb.wl("\tdef _args_seri_create_{}(self):".format(name))
             sb.wl("\t\targs_seri = {}()".format(args_seri_classn))
-            sb.wl("\t\targs_seri.read(codec)")
             sb.we()
+            sb.wl("\t\treturn args_seri")
+            sb.we()
+
+            sb.wl("\tdef _handle_{}(self, args_seri):".format(name))
 
             in_field_names = [field.get_name() for field in in_struct.get_fields()]
             args = ["arg_{}".format(in_field_name) for in_field_name in in_field_names]

@@ -1,6 +1,6 @@
 import struct
 
-from myrpc.Common import MyRPCInternalException, MessageHeaderException, MessageDecodeException
+from myrpc.Common import MyRPCInternalException, MessageHeaderException, MessageBodyException
 from myrpc.codec.CodecBase import FID_STOP, MessageType, DataType, CallRequestMessage, CallResponseMessage, CallExceptionMessage, ErrorMessage, CodecBase
 
 _SIGNATURE = 0x5341
@@ -142,7 +142,7 @@ class BinaryCodec(CodecBase):
         try:
             s = buf.decode(_ENCODING)
         except UnicodeError:
-            raise MessageDecodeException("Can't decode unicode string")
+            raise MessageBodyException("Can't decode unicode string")
 
         return s
 
@@ -241,7 +241,7 @@ class BinaryCodec(CodecBase):
     def _read_dtype(self):
         dtype = self.read_ui8()
         if dtype >= DataType._MAX:
-            raise MessageDecodeException("Unknown data type {}".format(dtype))
+            raise MessageBodyException("Unknown data type {}".format(dtype))
 
         return dtype
 

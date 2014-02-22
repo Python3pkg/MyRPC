@@ -1,5 +1,5 @@
 MyRPC          Python                       JavaScript
-
+------------------------------------------------------
 binary         bytes                        Uint8Array
 string         str                          string
 bool           FIXME (True, False)          boolean (true, false)

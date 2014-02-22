@@ -1,14 +1,13 @@
 # FIXME: bh generation for methods -> Client.js utanahuzas
 # FIXME: exc seri -> throw method, es akkor dobja ez a kivetelt (throw polimorphically...) -> Client.js utanahuzas
-# FIXME: struct_read: duplicate fid handle!
 # FIXME: privat functionok/classname-k? (pl. _myrpc...?)
 # FIXME: myrpc namespace -> error lesz belole
 # FIXME: getter, setter: this conflict! + kw conflict!
 
 import re
 
-from Constants import MYRPC_PREFIX, IDENTIFIER_RE
-from GeneratorBase import GeneratorBase, StringBuilder, GeneratorException
+from Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE
+from GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
 from TypeManager import DataTypeKind
 from InternalException import InternalException
 
@@ -16,12 +15,16 @@ _TYPES_FILENAME = "Types.js"
 _CLIENT_FILENAME = "Client.js"
 _ONCONTINUE = "{}{}".format(MYRPC_PREFIX, "oncontinue")
 _CONTINUE = "{}{}".format(MYRPC_PREFIX, "continue")
+_ARGS_RESULT_SERI_SFA = StructFieldAccess.UNDERSCORE
+_STRUCT_READ = "{}read".format(MYRPC_PREFIX)
+_STRUCT_WRITE = "{}write".format(MYRPC_PREFIX)
+_STRUCT_VALIDATE = "{}validate".format(U_MYRPC_PREFIX)
 
 class JSGenerator(GeneratorBase):
     """Generator for JavaScript."""
 
-    def __init__(self, namespace, tm, methods, indent, outdir):
-        super().__init__(namespace, tm, methods, indent, outdir)
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir):
+        super().__init__(namespace, tm, methods, indent, sfa, outdir)
 
         self._dtype_classp = "{}.Types".format(self._namespace)
         self._enum_read_funcp = "{}.{}enum_read".format(self._dtype_classp, MYRPC_PREFIX)
@@ -69,6 +72,9 @@ class JSGenerator(GeneratorBase):
     def _get_comment_prefix(self):
         return "//"
 
+    def _get_var_prefix(self):
+        return "this"
+
     def _gen_types(self):
         dtypes = self._sort_by_name(self._tm.list_dtype())
 
@@ -86,10 +92,13 @@ class JSGenerator(GeneratorBase):
             args_seri_classn = self._get_args_seri_classn(name)
             result_seri_classn = self._get_result_seri_classn(name)
 
-            s = self._dtype_kind_struct_gen(in_struct, args_seri_classn)
+            # Use fixed sfa during method args/result seri generation, because
+            # setter/getter naming can have dependencies in client/processor subrs.
+
+            s = self._dtype_kind_struct_gen(in_struct, args_seri_classn, _ARGS_RESULT_SERI_SFA)
             self._ws(s)
 
-            s = self._dtype_kind_struct_gen(out_struct, result_seri_classn)
+            s = self._dtype_kind_struct_gen(out_struct, result_seri_classn, _ARGS_RESULT_SERI_SFA)
             self._ws(s)
 
     def _gen_client(self):
@@ -129,8 +138,9 @@ class JSGenerator(GeneratorBase):
             for i in range(len(in_field_names)):
                 in_field_name = in_field_names[i]
                 arg = args[i]
+                setter_invoke = self._get_struct_field_setter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
 
-                sb.wl("\targs_seri.set_{}({});".format(in_field_name, arg))
+                sb.wl("\t{};".format(setter_invoke))
 
             sb.we()
 
@@ -296,9 +306,9 @@ class JSGenerator(GeneratorBase):
         sb.wl("\t\tmsg = \"Enum {} unknown value \" + v;".format(dtype_name))
         sb.we()
         sb.wl("\t\tif (is_read)")
-        sb.wl("\t\t\tthrow new myrpc.common.MessageDecodeException(msg);")
+        sb.wl("\t\t\tthrow new myrpc.common.MessageBodyException(msg);")
         sb.wl("\t\telse")
-        sb.wl("\t\t\tthrow new myrpc.common.SerializeException(msg);")
+        sb.wl("\t\t\tthrow new myrpc.common.MessageEncodeException(msg);")
         sb.wl("\t}")
         sb.wl("};")
         sb.we()
@@ -345,7 +355,7 @@ class JSGenerator(GeneratorBase):
         sb.wl("\tdtype = linfo[1];")
         sb.we()
         sb.wl("\tif (dtype != {})".format(codec_dtype_classn))
-        sb.wl("\t\tthrow new myrpc.common.MessageDecodeException(\"List {} has unexpected elem data type \" + dtype);".format(dtype_name))
+        sb.wl("\t\tthrow new myrpc.common.MessageBodyException(\"List {} has unexpected elem data type \" + dtype);".format(dtype_name))
         sb.we()
         sb.wl("\tfor (i = 0; i < llen; i++) {")
 
@@ -396,7 +406,7 @@ class JSGenerator(GeneratorBase):
 
         return sb.get_string()
 
-    def _dtype_kind_struct_gen(self, dtype, classn = None):
+    def _dtype_kind_struct_gen(self, dtype, classn = None, sfa = None):
         sb = StringBuilder()
         dtype_name = dtype.get_name()
         fields = dtype.get_fields()
@@ -416,41 +426,58 @@ class JSGenerator(GeneratorBase):
                 is_validate_needed = True
                 break
 
+        if sfa == None:
+            sfa = self._sfa
+
         sb.wl("{} = function()".format(classn))
         sb.wl("{")
 
         for field in fields:
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
 
-            sb.wl("\tthis._{} = null;".format(name))
+            sb.wl("\t{} = null;".format(var_name))
 
         sb.wl("};")
         sb.we()
 
-        # The generated code uses setters/getters to avoid problems
-        # regarding instance variable <-> method name overlap.
+        # Generate setter/getter methods.
+
+        self._sfa_check_start(dtype_name)
 
         for field in fields:
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
+            getter_name = self._get_struct_field_getter_name(name, sfa)
+            setter_name = self._get_struct_field_setter_name(name, sfa)
 
-            sb.wl("{}.prototype.get_{} = function()".format(classn, name))
-            sb.wl("{")
-            sb.wl("\treturn this._{};".format(name))
-            sb.wl("};")
-            sb.we()
+            if getter_name != None:
+                self._sfa_check_name(getter_name)
 
-            sb.wl("{0}.prototype.set_{1} = function({1})".format(classn, name))
-            sb.wl("{")
-            sb.wl("\tthis._{0} = {0};".format(name))
-            sb.wl("};")
-            sb.we()
+                sb.wl("{}.prototype.{} = function()".format(classn, getter_name))
+                sb.wl("{")
+                sb.wl("\treturn {};".format(var_name))
+                sb.wl("};")
+                sb.we()
 
-        sb.wl("{}.prototype.read = function(codec)".format(classn))
+            if setter_name != None:
+                self._sfa_check_name(setter_name)
+
+                sb.wl("{}.prototype.{} = function({})".format(classn, setter_name, name))
+                sb.wl("{")
+                sb.wl("\t{} = {};".format(var_name, name))
+                sb.wl("};")
+                sb.we()
+
+        # Generate serializer, deserializer and validator methods.
+
+        sb.wl("{}.prototype.{} = function(codec)".format(classn, _STRUCT_READ))
         sb.wl("{")
         sb.wl("\tvar finfo;")
         sb.wl("\tvar fid;")
         sb.wl("\tvar dtype;")
-        sb.wl("\tvar err;")
+        sb.wl("\tvar err_dtype;")
+        sb.wl("\tvar err_dup;")
         sb.we()
         sb.wl("\tcodec.read_struct_begin();")
         sb.we()
@@ -458,7 +485,8 @@ class JSGenerator(GeneratorBase):
         sb.wl("\t\tfinfo = codec.read_field_begin();")
         sb.wl("\t\tfid = finfo[0];")
         sb.wl("\t\tdtype = finfo[1];")
-        sb.wl("\t\terr = false;")
+        sb.wl("\t\terr_dtype = false;")
+        sb.wl("\t\terr_dup = false;")
         sb.we()
         sb.wl("\t\tif (fid == myrpc.codec.FID_STOP)")
         sb.wl("\t\t\tbreak;")
@@ -469,27 +497,31 @@ class JSGenerator(GeneratorBase):
             fid = field.get_fid()
             field_dtype = field.get_dtype()
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
             codec_dtype_classn = self._get_codec_dtype_classn(field_dtype)
 
             sb.wl("\t\t\tcase {}:".format(fid))
-            sb.wl("\t\t\t\tif (dtype == {}) {{".format(codec_dtype_classn))
+            sb.wl("\t\t\t\tif (dtype != {}) {{".format(codec_dtype_classn))
+            sb.wl("\t\t\t\t\terr_dtype = true;")
+            sb.wl("\t\t\t\t}} else if ({} != null) {{".format(var_name))
+            sb.wl("\t\t\t\t\terr_dup = true;")
+            sb.wl("\t\t\t\t} else {")
 
-            s = self._gtm.read_dtype(field_dtype, "this._{}".format(name))
+            s = self._gtm.read_dtype(field_dtype, var_name)
             sb.wlsindent("\t\t\t\t\t", s)
 
-            sb.wl("\t\t\t\t} else {")
-            sb.wl("\t\t\t\t\terr = true;")
             sb.wl("\t\t\t\t}")
-
             sb.wl("\t\t\t\tbreak;")
             sb.we()
 
         sb.wl("\t\t\tdefault:")
-        sb.wl("\t\t\t\tthrow new myrpc.common.MessageDecodeException(\"Struct {} unknown fid \" + fid);".format(dtype_name))
+        sb.wl("\t\t\t\tthrow new myrpc.common.MessageBodyException(\"Struct {} unknown fid \" + fid);".format(dtype_name))
         sb.wl("\t\t}")
         sb.we()
-        sb.wl("\t\tif (err)")
-        sb.wl("\t\t\tthrow new myrpc.common.MessageDecodeException(\"Struct {} fid \" + fid + \" has unexpected data type \" + dtype);".format(dtype_name))
+        sb.wl("\t\tif (err_dtype)")
+        sb.wl("\t\t\tthrow new myrpc.common.MessageBodyException(\"Struct {} fid \" + fid + \" has unexpected data type \" + dtype);".format(dtype_name))
+        sb.wl("\t\telse if (err_dup)")
+        sb.wl("\t\t\tthrow new myrpc.common.MessageBodyException(\"Struct {} fid \" + fid + \" is duplicated\");".format(dtype_name))
         sb.we()
         sb.wl("\t\tcodec.read_field_end();")
         sb.wl("\t}")
@@ -498,16 +530,16 @@ class JSGenerator(GeneratorBase):
 
         if is_validate_needed:
             sb.we()
-            sb.wl("\tthis._validate(true);")
+            sb.wl("\tthis.{}(true);".format(_STRUCT_VALIDATE))
 
         sb.wl("};")
         sb.we()
 
-        sb.wl("{}.prototype.write = function(codec)".format(classn))
+        sb.wl("{}.prototype.{} = function(codec)".format(classn, _STRUCT_WRITE))
         sb.wl("{")
 
         if is_validate_needed:
-            sb.wl("\tthis._validate(false);")
+            sb.wl("\tthis.{}(false);".format(_STRUCT_VALIDATE))
             sb.we()
 
         sb.wl("\tcodec.write_struct_begin();")
@@ -518,17 +550,18 @@ class JSGenerator(GeneratorBase):
             req = field.get_req()
             field_dtype = field.get_dtype()
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
             codec_dtype_classn = self._get_codec_dtype_classn(field_dtype)
 
             indent = "\t"
 
             if not req:
-                sb.wl("\tif (this._{} != null) {{".format(name))
+                sb.wl("\tif ({} != null) {{".format(var_name))
                 indent += "\t"
 
             sb.wl("{}codec.write_field_begin({}, {});".format(indent, fid, codec_dtype_classn))
 
-            s = self._gtm.write_dtype(field_dtype, "this._{}".format(name))
+            s = self._gtm.write_dtype(field_dtype, var_name)
             sb.wlsindent(indent, s)
 
             sb.wl("{}codec.write_field_end();".format(indent))
@@ -545,28 +578,33 @@ class JSGenerator(GeneratorBase):
         sb.we()
 
         if is_validate_needed:
-            sb.wl("{}.prototype._validate = function(is_read)".format(classn))
+            sb.wl("{}.prototype.{} = function(is_read)".format(classn, _STRUCT_VALIDATE))
             sb.wl("{")
             sb.wl("\tvar msg;")
             sb.wl("\tvar name = null;")
             sb.we()
 
-            for (i, field) in enumerate(fields):
+            i = 0
+
+            for field in fields:
                 req = field.get_req()
                 name = field.get_name()
+                var_name = self._get_struct_field_var_name(name, sfa)
 
                 if req:
-                    sb.wl("\t{} (this._{} == null)".format("else if" if i > 0 else "if", name))
+                    sb.wl("\t{} ({} == null)".format("else if" if i > 0 else "if", var_name))
                     sb.wl("\t\tname = \"{}\";".format(name))
+
+                    i += 1
 
             sb.we()
             sb.wl("\tif (name != null) {")
             sb.wl("\t\tmsg = \"Struct {} field \" + name + \" is null\";".format(dtype_name))
             sb.we()
             sb.wl("\t\tif (is_read)")
-            sb.wl("\t\t\tthrow new myrpc.common.MessageDecodeException(msg);")
+            sb.wl("\t\t\tthrow new myrpc.common.MessageBodyException(msg);")
             sb.wl("\t\telse")
-            sb.wl("\t\t\tthrow new myrpc.common.SerializeException(msg);")
+            sb.wl("\t\t\tthrow new myrpc.common.MessageEncodeException(msg);")
             sb.wl("\t}")
 
             sb.wl("};")
@@ -580,14 +618,14 @@ class JSGenerator(GeneratorBase):
         classn = self._get_dtype_classn(dtype_name)
 
         sb.wl("{} = new {}();".format(v, classn))
-        sb.wl("{}.read(codec);".format(v))
+        sb.wl("{}.{}(codec);".format(v, _STRUCT_READ))
 
         return sb.get_string()
 
     def _dtype_kind_struct_write(self, dtype, v):
         sb = StringBuilder()
 
-        sb.wl("{}.write(codec);".format(v))
+        sb.wl("{}.{}(codec);".format(v, _STRUCT_WRITE))
 
         return sb.get_string()
 

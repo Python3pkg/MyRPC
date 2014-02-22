@@ -24,31 +24,31 @@ class MyRPCInternalException(Exception):
     def get_msg(self):
         return self._msg
 
-class SerializeException(MyRPCException):
+class MessageEncodeException(MyRPCException):
     """Serialize exception class."""
 
     def __init__(self, msg):
         super().__init__(msg)
 
-class DeserializeException(MyRPCException):
+class MessageDecodeException(MyRPCException):
     """Base class for deserialize-related exceptions."""
 
     def __init__(self, msg):
         super().__init__(msg)
 
-class MessageTruncatedException(DeserializeException):
+class MessageTruncatedException(MessageDecodeException):
     """Thrown by transport implementation if the received message is truncated."""
 
     def __init__(self):
         super().__init__("Message is truncated")
 
-class MessageHeaderException(DeserializeException):
+class MessageHeaderException(MessageDecodeException):
     """Thrown by codec if there is a problem with the header of received message."""
 
     def __init__(self, msg):
         super().__init__(msg)
 
-class MessageDecodeException(DeserializeException):
+class MessageBodyException(MessageDecodeException):
     """Thrown by codec or deserializer if there is a problem."""
 
     def __init__(self, msg):

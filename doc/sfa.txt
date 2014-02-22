@@ -1,0 +1,6 @@
+sfa		var_name	getter_name/setter_name		problems
+------------------------------------------------------------------------
+underscore	_var		get_var()/set_var()		no conflict: OK
+capital		_var		getVar()/setVar()		getters conflict weo, setters conflict weo (uppercasing): _sfa_check_name
+direct		var		-				vars conflict with builtins (read, write, _validate): prefix builtins with myrpc
+                                                                (identifiers beginning with myrpc_ and _myrpc_ are not allowed)

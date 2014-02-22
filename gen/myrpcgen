@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from Constants import VERSION
-from GeneratorBase import GeneratorBase, GeneratorException
+from GeneratorBase import StructFieldAccess, GeneratorBase, GeneratorException
 from Parser import Parser, ParserException
 
 # Generators registers themshelves at import.
@@ -14,6 +14,10 @@ import PyGenerator
 
 INDENT = 4
 OUTDIR = "."
+SFA = "underscore" # Default, must be in SFA_CHOICES.
+SFA_CHOICES = {"underscore": StructFieldAccess.UNDERSCORE,
+               "capital":    StructFieldAccess.CAPITAL,
+               "direct":     StructFieldAccess.DIRECT}
 
 def main():
     # Parse command line arguments.
@@ -49,7 +53,9 @@ def main():
     except KeyError:
         fatal("Namespace for {} is not defined".format(gen_name))
 
-    gen = gen_class(namespace, tm, methods, args.indent, args.outdir)
+    sfa = SFA_CHOICES[args.sfa_name]
+
+    gen = gen_class(namespace, tm, methods, args.indent, sfa, args.outdir)
 
     try:
         gen.gen_types()
@@ -75,7 +81,11 @@ def parse_args():
     parser.add_argument("-t", dest = "indent",
                         metavar = "indent",
                         default = INDENT,
-                        help = "identation character count (default: {})".format(INDENT))
+                        help = "identation width (default: {})".format(INDENT))
+    parser.add_argument("-f", dest = "sfa_name",
+                        choices = SFA_CHOICES,
+                        default = SFA,
+                        help = "struct field access (default: {})".format(SFA))
     parser.add_argument("-d", dest = "outdir", metavar = "outdir",
                         default = OUTDIR,
                         help = "output directory for generated files (default: {})".format(OUTDIR))

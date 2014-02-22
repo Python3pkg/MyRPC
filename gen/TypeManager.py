@@ -7,6 +7,7 @@ _FID_STOP = 0xffff
 
 class DataTypeKind:
     """Data type kind enum."""
+
     (# Primitive types:
      BINARY,
      STRING,

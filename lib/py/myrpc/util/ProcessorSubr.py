@@ -1,7 +1,7 @@
 # FIXME: ne kelljen mindig uj Processor obj ha a tr/codec valtozik
 # FIXME: HandlerReturn state check
 
-from myrpc.Common import MyRPCInternalException, DeserializeException, MessageHeaderException
+from myrpc.Common import MyRPCInternalException, MessageDecodeException, MessageHeaderException
 from myrpc.transport.TransportBase import TransportState
 from myrpc.codec.CodecBase import MessageType, CallResponseMessage, CallExceptionMessage, ErrorMessage
 
@@ -41,8 +41,8 @@ class ProcessorSubr:
 
         try:
             self._process_one()
-        except DeserializeException as e:
-            # Handle deserializer errors.
+        except MessageDecodeException as e:
+            # Handle decoding errors.
 
             err_msg = e.get_msg()
             msg = ErrorMessage(err_msg)
@@ -90,7 +90,7 @@ class ProcessorSubr:
         # _process_CALL_REQUEST_write.
 
         args_seri = args_seri_create()
-        args_seri.read(self._codec)
+        args_seri.myrpc_read(self._codec)
 
         self._args_seri = args_seri
         self._handler = handler
@@ -106,7 +106,7 @@ class ProcessorSubr:
         # However:
         #  - Exceptions defined in IDL are catched in handler, this is the normal
         #    behaviour.
-        #  - DeserializeException is catched in ProcessorSubr.process_one, and it
+        #  - MessageDecodeException is catched in ProcessorSubr.process_one, and it
         #    means that we can't decode the message. An ErrorMessage will be sent
         #    back to the client in this case.
 
@@ -118,11 +118,11 @@ class ProcessorSubr:
         if exc:
             msg = CallExceptionMessage(exc_name)
             self._codec.write_message_begin(msg)
-            exc.write(self._codec)
+            exc.myrpc_write(self._codec)
         elif r:
             msg = CallResponseMessage()
             self._codec.write_message_begin(msg)
-            r.write(self._codec)
+            r.myrpc_write(self._codec)
         else:
             raise MyRPCInternalException("Neither exc nor result is set")
 

@@ -4,24 +4,27 @@
 # FIXME: getter, setter: self conflict! + kw conflict!
 # FIXME: myrpc namespace: gond lehet belole...
 # FIXME: indent usage... (js is)
-# FIXME: struct_read: duplicate fid handle!
 
 import re
 
-from Constants import MYRPC_PREFIX, IDENTIFIER_RE
-from GeneratorBase import GeneratorBase, StringBuilder, GeneratorException
+from Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE
+from GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
 from TypeManager import DataTypeKind
 from InternalException import InternalException
 
 _TYPES_MODULE = "Types"
 _TYPES_FILENAME = "{}.py".format(_TYPES_MODULE)
 _PROCESSOR_FILENAME = "Processor.py"
+_ARGS_RESULT_SERI_SFA = StructFieldAccess.UNDERSCORE
+_STRUCT_READ = "{}read".format(MYRPC_PREFIX)
+_STRUCT_WRITE = "{}write".format(MYRPC_PREFIX)
+_STRUCT_VALIDATE = "{}validate".format(U_MYRPC_PREFIX)
 
 class PyGenerator(GeneratorBase):
     """Generator for Python."""
 
-    def __init__(self, namespace, tm, methods, indent, outdir):
-        super().__init__(namespace, tm, methods, indent, outdir)
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir):
+        super().__init__(namespace, tm, methods, indent, sfa, outdir)
 
         self._enum_read_funcp = "{}enum_read".format(MYRPC_PREFIX)
         self._enum_write_funcp = "{}enum_write".format(MYRPC_PREFIX)
@@ -86,6 +89,9 @@ class PyGenerator(GeneratorBase):
     def _get_comment_prefix(self):
         return "#"
 
+    def _get_var_prefix(self):
+        return "self"
+
     def _gen_types(self):
         dtypes = self._sort_by_name(self._tm.list_dtype())
 
@@ -103,10 +109,13 @@ class PyGenerator(GeneratorBase):
             args_seri_classn = self._get_args_seri_classn(name)
             result_seri_classn = self._get_result_seri_classn(name)
 
-            s = self._dtype_kind_struct_gen(in_struct, args_seri_classn)
+            # Use fixed sfa during method args/result seri generation, because
+            # setter/getter naming can have dependencies in client/processor subrs.
+
+            s = self._dtype_kind_struct_gen(in_struct, args_seri_classn, _ARGS_RESULT_SERI_SFA)
             self._ws(s)
 
-            s = self._dtype_kind_struct_gen(out_struct, result_seri_classn)
+            s = self._dtype_kind_struct_gen(out_struct, result_seri_classn, _ARGS_RESULT_SERI_SFA)
             self._ws(s)
 
     def _gen_iface(self):
@@ -189,8 +198,9 @@ class PyGenerator(GeneratorBase):
             for i in range(len(in_field_names)):
                 in_field_name = in_field_names[i]
                 arg = args[i]
+                getter_invoke = self._get_struct_field_getter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
 
-                sb.wl("\t\t{} = args_seri.get_{}()".format(arg, in_field_name))
+                sb.wl("\t\t{}".format(getter_invoke))
 
             sb.we() # FIXME: extra nl if no arg # FIXME: no exc method?
             sb.wl("\t\texc_name = None")
@@ -222,7 +232,8 @@ class PyGenerator(GeneratorBase):
             sb.wl("\t\t\tresult_seri = {}()".format(result_seri_classn))
 
             if has_result:
-                sb.wl("\t\t\tresult_seri.set_result(r)")
+                setter_invoke = self._get_struct_field_setter_invoke("result_seri", "result", "r", _ARGS_RESULT_SERI_SFA) # FIXME: result: constant?: TypeManager
+                sb.wl("\t\t\t{}".format(setter_invoke))
 
             sb.we()
             sb.wl("\t\t\thr.set_result(result_seri)")
@@ -324,9 +335,9 @@ class PyGenerator(GeneratorBase):
         sb.wl("\t\tmsg = \"Enum {} unknown value {{}}\".format(v)".format(dtype_name))
         sb.we()
         sb.wl("\t\tif is_read:")
-        sb.wl("\t\t\traise myrpc.Common.MessageDecodeException(msg)")
+        sb.wl("\t\t\traise myrpc.Common.MessageBodyException(msg)")
         sb.wl("\t\telse:")
-        sb.wl("\t\t\traise myrpc.Common.SerializeException(msg)")
+        sb.wl("\t\t\traise myrpc.Common.MessageEncodeException(msg)")
         sb.we()
 
         return sb.get_string()
@@ -361,7 +372,7 @@ class PyGenerator(GeneratorBase):
         sb.wl("\t(llen, dtype) = codec.read_list_begin()")
         sb.we()
         sb.wl("\tif dtype != {}:".format(codec_dtype_classn))
-        sb.wl("\t\traise myrpc.Common.MessageDecodeException(\"List {} has unexpected elem data type {{}}\".format(dtype))".format(dtype_name))
+        sb.wl("\t\traise myrpc.Common.MessageBodyException(\"List {} has unexpected elem data type {{}}\".format(dtype))".format(dtype_name))
         sb.we()
         sb.wl("\tl = []")
         sb.we()
@@ -409,7 +420,7 @@ class PyGenerator(GeneratorBase):
 
         return sb.get_string()
 
-    def _dtype_kind_struct_gen(self, dtype, classn = None):
+    def _dtype_kind_struct_gen(self, dtype, classn = None, sfa = None):
         sb = StringBuilder()
         dtype_name = dtype.get_name()
         fields = dtype.get_fields()
@@ -430,6 +441,9 @@ class PyGenerator(GeneratorBase):
                 is_validate_needed = True
                 break
 
+        if sfa == None:
+            sfa = self._sfa
+
         parent_classn = "(Exception)" if dtype_kind_is_exc else ""
         sb.wl("class {}{}:".format(classn, parent_classn))
 
@@ -444,31 +458,45 @@ class PyGenerator(GeneratorBase):
 
         for field in fields:
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
 
-            sb.wl("\t\tself._{} = None".format(name))
+            sb.wl("\t\t{} = None".format(var_name))
 
         sb.we()
 
-        # The generated code uses setters/getters to avoid problems
-        # regarding instance variable <-> method name overlap.
+        # Generate setter/getter methods.
+
+        self._sfa_check_start(dtype_name)
 
         for field in fields:
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
+            getter_name = self._get_struct_field_getter_name(name, sfa)
+            setter_name = self._get_struct_field_setter_name(name, sfa)
 
-            sb.wl("\tdef get_{}(self):".format(name))
-            sb.wl("\t\treturn self._{}".format(name))
-            sb.we()
+            if getter_name != None:
+                self._sfa_check_name(getter_name)
 
-            sb.wl("\tdef set_{0}(self, {0}):".format(name))
-            sb.wl("\t\tself._{0} = {0}".format(name))
-            sb.we()
+                sb.wl("\tdef {}(self):".format(getter_name))
+                sb.wl("\t\treturn {}".format(var_name))
+                sb.we()
 
-        sb.wl("\tdef read(self, codec):")
+            if setter_name != None:
+                self._sfa_check_name(setter_name)
+
+                sb.wl("\tdef {}(self, {}):".format(setter_name, name))
+                sb.wl("\t\t{} = {}".format(var_name, name))
+                sb.we()
+
+        # Generate serializer, deserializer and validator methods.
+
+        sb.wl("\tdef {}(self, codec):".format(_STRUCT_READ))
         sb.wl("\t\tcodec.read_struct_begin()")
         sb.we()
         sb.wl("\t\twhile True:")
         sb.wl("\t\t\t(fid, dtype) = codec.read_field_begin()")
-        sb.wl("\t\t\terr = False")
+        sb.wl("\t\t\terr_dtype = False")
+        sb.wl("\t\t\terr_dup = False")
         sb.we()
         sb.wl("\t\t\tif fid == myrpc.codec.CodecBase.FID_STOP:")
         sb.wl("\t\t\t\tbreak")
@@ -478,16 +506,18 @@ class PyGenerator(GeneratorBase):
             fid = field.get_fid()
             field_dtype = field.get_dtype()
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
             codec_dtype_classn = self._get_codec_dtype_classn(field_dtype)
 
             sb.wl("\t\t\t{} fid == {}:".format("elif" if i > 0 else "if", fid))
-            sb.wl("\t\t\t\tif dtype == {}:".format(codec_dtype_classn))
-
-            s = self._gtm.read_dtype(field_dtype, "self._{}".format(name))
-            sb.wlsindent("\t\t\t\t\t", s)
-
+            sb.wl("\t\t\t\tif dtype != {}:".format(codec_dtype_classn))
+            sb.wl("\t\t\t\t\terr_dtype = True")
+            sb.wl("\t\t\t\telif {} != None:".format(var_name))
+            sb.wl("\t\t\t\t\terr_dup = True")
             sb.wl("\t\t\t\telse:")
-            sb.wl("\t\t\t\t\terr = True")
+
+            s = self._gtm.read_dtype(field_dtype, var_name)
+            sb.wlsindent("\t\t\t\t\t", s)
 
         indent = "\t\t\t"
 
@@ -495,11 +525,13 @@ class PyGenerator(GeneratorBase):
             sb.wl("\t\t\telse:")
             indent += "\t"
 
-        sb.wl("{}raise myrpc.Common.MessageDecodeException(\"Struct {} unknown fid {{}}\".format(fid))".format(indent, dtype_name))
+        sb.wl("{}raise myrpc.Common.MessageBodyException(\"Struct {} unknown fid {{}}\".format(fid))".format(indent, dtype_name))
 
         sb.we()
-        sb.wl("\t\t\tif err:")
-        sb.wl("\t\t\t\traise myrpc.Common.MessageDecodeException(\"Struct {} fid {{}} has unexpected data type {{}}\".format(fid, dtype))".format(dtype_name))
+        sb.wl("\t\t\tif err_dtype:")
+        sb.wl("\t\t\t\traise myrpc.Common.MessageBodyException(\"Struct {} fid {{}} has unexpected data type {{}}\".format(fid, dtype))".format(dtype_name))
+        sb.wl("\t\t\telif err_dup:")
+        sb.wl("\t\t\t\traise myrpc.Common.MessageBodyException(\"Struct {} fid {{}} is duplicated\".format(fid))".format(dtype_name))
         sb.we()
         sb.wl("\t\t\tcodec.read_field_end()")
         sb.we()
@@ -507,14 +539,14 @@ class PyGenerator(GeneratorBase):
 
         if is_validate_needed:
             sb.we()
-            sb.wl("\t\tself._validate(True)")
+            sb.wl("\t\tself.{}(True)".format(_STRUCT_VALIDATE))
 
         sb.we()
 
-        sb.wl("\tdef write(self, codec):")
+        sb.wl("\tdef {}(self, codec):".format(_STRUCT_WRITE))
 
         if is_validate_needed:
-            sb.wl("\t\tself._validate(False)")
+            sb.wl("\t\tself.{}(False)".format(_STRUCT_VALIDATE))
             sb.we()
 
         sb.wl("\t\tcodec.write_struct_begin()")
@@ -525,17 +557,18 @@ class PyGenerator(GeneratorBase):
             req = field.get_req()
             field_dtype = field.get_dtype()
             name = field.get_name()
+            var_name = self._get_struct_field_var_name(name, sfa)
             codec_dtype_classn = self._get_codec_dtype_classn(field_dtype)
 
             indent = "\t\t"
 
             if not req:
-                sb.wl("\t\tif self._{} != None:".format(name))
+                sb.wl("\t\tif {} != None:".format(var_name))
                 indent += "\t"
 
             sb.wl("{}codec.write_field_begin({}, {})".format(indent, fid, codec_dtype_classn))
 
-            s = self._gtm.write_dtype(field_dtype, "self._{}".format(name))
+            s = self._gtm.write_dtype(field_dtype, var_name)
             sb.wlsindent(indent, s)
 
             sb.wl("{}codec.write_field_end()".format(indent))
@@ -547,26 +580,31 @@ class PyGenerator(GeneratorBase):
         sb.we()
 
         if is_validate_needed:
-            sb.wl("\tdef _validate(self, is_read):")
+            sb.wl("\tdef {}(self, is_read):".format(_STRUCT_VALIDATE))
             sb.wl("\t\tname = None")
             sb.we()
 
-            for (i, field) in enumerate(fields):
+            i = 0
+
+            for field in fields:
                 req = field.get_req()
                 name = field.get_name()
+                var_name = self._get_struct_field_var_name(name, sfa)
 
                 if req:
-                    sb.wl("\t\t{} self._{} == None:".format("elif" if i > 0 else "if", name))
+                    sb.wl("\t\t{} {} == None:".format("elif" if i > 0 else "if", var_name))
                     sb.wl("\t\t\tname = \"{}\"".format(name))
+
+                    i += 1
 
             sb.we()
             sb.wl("\t\tif name != None:")
             sb.wl("\t\t\tmsg = \"Struct {} field {{}} is None\".format(name)".format(dtype_name))
             sb.we()
             sb.wl("\t\t\tif is_read:")
-            sb.wl("\t\t\t\traise myrpc.Common.MessageDecodeException(msg)")
+            sb.wl("\t\t\t\traise myrpc.Common.MessageBodyException(msg)")
             sb.wl("\t\t\telse:")
-            sb.wl("\t\t\t\traise myrpc.Common.SerializeException(msg)")
+            sb.wl("\t\t\t\traise myrpc.Common.MessageEncodeException(msg)")
             sb.we()
 
         return sb.get_string()
@@ -577,14 +615,14 @@ class PyGenerator(GeneratorBase):
         classn = self._get_dtype_classn(dtype_name)
 
         sb.wl("{} = {}()".format(v, classn))
-        sb.wl("{}.read(codec)".format(v))
+        sb.wl("{}.{}(codec)".format(v, _STRUCT_READ))
 
         return sb.get_string()
 
     def _dtype_kind_struct_write(self, dtype, v):
         sb = StringBuilder()
 
-        sb.wl("{}.write(codec)".format(v))
+        sb.wl("{}.{}(codec)".format(v, _STRUCT_WRITE))
 
         return sb.get_string()
 

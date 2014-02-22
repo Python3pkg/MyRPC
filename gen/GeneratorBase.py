@@ -8,16 +8,24 @@ from abc import ABCMeta, abstractmethod
 from Constants import VERSION, ENCODING
 from InternalException import InternalException
 
+class StructFieldAccess:
+    """What kind of getter/setter will be generated?"""
+
+    (UNDERSCORE,
+     CAPITAL,
+     DIRECT) = range(3)
+
 class GeneratorBase(metaclass = ABCMeta):
     """Base class for generator implementation classes."""
 
     _generators = {}
 
-    def __init__(self, namespace, tm, methods, indent, outdir):
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir):
         self._namespace = namespace
         self._tm = tm
         self._methods = methods
         self._indent = indent
+        self._sfa = sfa
         self._outdir = outdir
 
         self._gtm = GeneratorTypeManager()
@@ -48,6 +56,10 @@ class GeneratorBase(metaclass = ABCMeta):
 
     @abstractmethod
     def _get_comment_prefix(self):
+        pass
+
+    @abstractmethod
+    def _get_var_prefix(self):
         pass
 
     def _open(self, filename):
@@ -88,6 +100,94 @@ class GeneratorBase(metaclass = ABCMeta):
         objs_sorted = sorted(objs, key = lambda obj: obj.get_name())
 
         return objs_sorted
+
+    def _sfa_check_start(self, dtype_name):
+        self._sfa_dtype_name = dtype_name
+        self._sfa_names = set()
+
+    def _sfa_check_name(self, name):
+        # Check if a given setter/getter name is unique in a struct.
+
+        if name in self._sfa_names:
+            raise GeneratorException("sfa conflict for method {} in {}".format(name, self._sfa_dtype_name))
+
+        self._sfa_names.add(name)
+
+    def _get_struct_field_var_name(self, name, sfa):
+        # Calculate an expression which can be used to access a given
+        # field from inside the struct.
+
+        prefix = "{}".format(self._get_var_prefix())
+
+        if (sfa == StructFieldAccess.UNDERSCORE or
+            sfa == StructFieldAccess.CAPITAL):
+            var_name = "{}._{}".format(prefix, name)
+        elif sfa == StructFieldAccess.DIRECT:
+            var_name = "{}.{}".format(prefix, name)
+        else:
+            raise InternalException("sfa {} is unknown".format(sfa))
+
+        return var_name
+
+    def _get_struct_field_getter_name(self, name, sfa):
+        # Calculate getter method name, return None if not needed.
+
+        if sfa == StructFieldAccess.UNDERSCORE:
+            getter_name = "get_{}".format(name)
+        elif sfa == StructFieldAccess.CAPITAL:
+            firstchar = name[0].upper()
+            rest = name[1:]
+            getter_name = "get{}{}".format(firstchar, rest)
+        elif sfa == StructFieldAccess.DIRECT:
+            getter_name = None
+        else:
+            raise InternalException("sfa {} is unknown".format(sfa))
+
+        return getter_name
+
+    def _get_struct_field_setter_name(self, name, sfa):
+        # Calculate setter method name, return None if not needed.
+
+        if sfa == StructFieldAccess.UNDERSCORE:
+            setter_name = "set_{}".format(name)
+        elif sfa == StructFieldAccess.CAPITAL:
+            firstchar = name[0].upper()
+            rest = name[1:]
+            setter_name = "set{}{}".format(firstchar, rest)
+        elif sfa == StructFieldAccess.DIRECT:
+            setter_name = None
+        else:
+            raise InternalException("sfa {} is unknown".format(sfa))
+
+        return setter_name
+
+    def _get_struct_field_getter_invoke(self, obj, name, v, sfa):
+        # Invoke getter on a given object and field name.
+
+        if (sfa == StructFieldAccess.UNDERSCORE or
+            sfa == StructFieldAccess.CAPITAL):
+            getter_name = self._get_struct_field_getter_name(name, sfa)
+            getter_invoke = "{} = {}.{}()".format(v, obj, getter_name)
+        elif sfa == StructFieldAccess.DIRECT:
+            getter_invoke = "{} = {}.{}".format(v, obj, name)
+        else:
+            raise InternalException("sfa {} is unknown".format(sfa))
+
+        return getter_invoke
+
+    def _get_struct_field_setter_invoke(self, obj, name, v, sfa):
+        # Invoke setter on a given object and field name.
+
+        if (sfa == StructFieldAccess.UNDERSCORE or
+            sfa == StructFieldAccess.CAPITAL):
+            setter_name = self._get_struct_field_setter_name(name, sfa)
+            setter_invoke = "{}.{}({})".format(obj, setter_name, v)
+        elif sfa == StructFieldAccess.DIRECT:
+            setter_invoke = "{}.{} = {}".format(obj, name, v)
+        else:
+            raise InternalException("sfa {} is unknown".format(sfa))
+
+        return setter_invoke
 
     @staticmethod
     def register_gen(gen_name, gen_class):

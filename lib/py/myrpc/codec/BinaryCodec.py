@@ -34,15 +34,15 @@ class BinaryCodec(CodecBase):
 
         mtype = self.read_ui8()
         if mtype == MessageType.CALL_REQUEST:
-            name = self.read_string()
+            name = self.read_string(True)
             msg = CallRequestMessage(name)
         elif mtype == MessageType.CALL_RESPONSE:
             msg = CallResponseMessage()
         elif mtype == MessageType.CALL_EXCEPTION:
-            name = self.read_string()
+            name = self.read_string(True)
             msg = CallExceptionMessage(name)
         elif mtype == MessageType.ERROR:
-            err_msg = self.read_string()
+            err_msg = self.read_string(True)
             msg = ErrorMessage(err_msg)
         else:
             raise MessageHeaderException("Unknown message type {}".format(mtype))
@@ -137,12 +137,14 @@ class BinaryCodec(CodecBase):
         self.write_ui32(buflen)
         self._tr.write(buf)
 
-    def read_string(self):
+    def read_string(self, _in_header = False):
         buf = self.read_binary()
         try:
             s = buf.decode(_ENCODING)
         except UnicodeError:
-            raise MessageBodyException("Can't decode unicode string")
+            msg = "Can't decode unicode string"
+            exc = MessageHeaderException(msg) if _in_header else MessageBodyException(msg)
+            raise exc
 
         return s
 

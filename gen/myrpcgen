@@ -58,6 +58,8 @@ def main():
     gen = gen_class(namespace, tm, methods, args.indent, sfa, args.outdir)
 
     try:
+        gen.create_outdir()
+
         gen.gen_types()
 
         if args.client:
@@ -71,8 +73,7 @@ def main():
     sys.exit(0)
 
 def parse_args():
-    # FIXME: argparser, common exit, exitcode, one group
-    # FIXME: display help: generators specific options
+    # FIXME: argparser, common exit, exitcode
 
     gen_namesf = ", ".join(GeneratorBase.list_gen())
 

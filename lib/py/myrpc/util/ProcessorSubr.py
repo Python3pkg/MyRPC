@@ -1,6 +1,3 @@
-# FIXME: ne kelljen mindig uj Processor obj ha a tr/codec valtozik
-# FIXME: HandlerReturn state check
-
 from myrpc.Common import MyRPCInternalException, MessageDecodeException, MessageHeaderException
 from myrpc.transport.TransportBase import TransportState
 from myrpc.codec.CodecBase import MessageType, CallResponseMessage, CallExceptionMessage, ErrorMessage
@@ -29,14 +26,15 @@ class HandlerReturn:
 class ProcessorSubr:
     """Processor class for server applications."""
 
-    def __init__(self, tr, codec, methodmap):
+    def __init__(self, methodmap):
+        self._methodmap = methodmap
+
+    def process_one(self, tr, codec):
         self._tr = tr
         self._codec = codec
-        self._methodmap = methodmap
 
         self._codec.set_transport(tr)
 
-    def process_one(self):
         self._reset()
 
         try:
@@ -82,14 +80,14 @@ class ProcessorSubr:
         name = msg.get_name()
 
         try:
-            (args_seri_create, handler) = self._methodmap[name]
+            (args_seri_class, handler) = self._methodmap[name]
         except KeyError:
             raise MessageHeaderException("Unknown method name {}".format(name))
 
         # Deserialize method arguments. The actual method call will be happen in
         # _process_CALL_REQUEST_write.
 
-        args_seri = args_seri_create()
+        args_seri = args_seri_class()
         args_seri.myrpc_read(self._codec)
 
         self._args_seri = args_seri

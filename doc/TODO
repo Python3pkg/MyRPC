@@ -1,3 +1,5 @@
+FIXME: finish doc
+
 - lib/py: assert-ek, None check-ek
 - py: super().__init__ check
 - py: docstring corrections
@@ -14,39 +16,57 @@
 - objc: - Once we have native C implementation, then rewrite ObjC runtime as a wrapper.
 - website: live demo, pl. kepfeltolto... + forraskod + doc + kulcsrakesz kliensek!
 
-- binary capable (no base64, whatever encoding)
-- lang api-s are similar
-- js/nodejs
-- single roundtrip
+---
+
+- TODO
 - circular references not supported yet
-- jsclient: browser, jsserver: nodejs
-- unified web/mobile access
-- support exc throw w/ normal calling convention (myrpc_continue)
-- delayed exc handling (myrpc_continue)
 
 ---
 
-- Azutan:
-  - js: namespace create!
-  - py: dir create!
-  - FIXME javitas
-  - FIXME: processor::process_one(tr, codec)
-  - FIXME: http statuszkod a httpclientransport.js-ben
+- JSGenerator
+# FIXME: bh generation for methods -> Client.js utanahuzas
+# FIXME: exc seri -> throw method, es akkor dobja ez a kivetelt (throw polimorphically...) -> Client.js utanahuzas
+# FIXME: privat functionok/classname-k? (pl. _myrpc...?)
+# FIXME: myrpc namespace -> error lesz belole
+# FIXME: getter, setter: this conflict! + kw conflict!
+# FIXME: this._client -> this._myrpc_client?
+# FIXME: constant vagy member var? (py is)
 
-  - Types/client/processor optimalizacio! (esetleg segedfunctionokkal...)
-    - js exc_handler: felesleges az osztaly
-    - py handler[0]: felesleges erre egy method...
+- GeneratorBase
+# FIXME: id-kent nem lehet this, self, stb.
+# FIXME: Serializer/DeserializerException msg-k egysegesitese a generatorok kozott
 
----
+- PyGenerator
+# FIXME: privat functionok/classname-k? (pl. _myrpc...?)
+# FIXME: getter, setter: self conflict! + kw conflict!
+# FIXME: myrpc namespace: gond lehet belole...
+# FIXME: indent usage... (js is)
+# FIXME: constant vagy member var?
+
+- HTTPClient
+// FIXME: Content-Length request/reply
+// FIXME: xhr level 2 check
+// FIXME: teszt 0 hosszusagu adatokra
+// FIXME: XMLHttpRequest errorcallback test for != 200 http response (~ baj van vele sztem)
+
+- ProcSubr
+# FIXME: HandlerReturn state check?
 
 - Tehat
-  - MessageBodyException("Can't decode unicode string"): nem egeszen jo, mert a headerben is lehet string...
+  - Types/client/processor optimalizacio! (esetleg segedfunctionokkal...)
+  - len compression...
+  - FIXME: read_string(in_header) helyett valami jobb megoldas
+  - useful diagnostics
+    FIXME: struct/list_read: ha a read_string/binary/stb... error van, akkor nem vilagos, hogy melyik listelem/structfield az...
+  - Parser: get_id unicode?
   - sfa az idl-be es nem a command-lineba?
   - sfa setting + check atgondolas (valami ugyesebb kellene), esetleg a TypeManager::StructType-be tegyuk bele?
   - *Generator: name -> method_name, etc...
   - httpclient: keepalive kuldes
   - processor.py: longpolling support + wikipedia link + tornado example
   - nodejs server modul? (+ examples client es szerverhez)
+  - len compression...
+  - testcase-ek?
 
 IMPL:
 
@@ -79,11 +99,6 @@ proc->process_continue(); // call Impl->myrpc_continue_osszead(...);
 - Doc
   - compat/strict mode application note (pl. rpc verziozas, kliens update, stb.)
 
-- Cel
-  - correct input validation
-  - binarycodec is supported on all platforms
-  - all datatypes are supported on all platforms (w/ limitations)
-
 - Altalanos
   - try+catch or explicit check? 
   - (...) konstrukciokat atnezni, js-ben is! ([0], [1], .prop helyett)
@@ -95,7 +110,6 @@ proc->process_continue(); // call Impl->myrpc_continue_osszead(...);
   - Types szetvalasztas kliens ill. szerver oldalra?
   - Elegge szigoru a proto impl. Esetleg konnyites?
   - ERROR message: include errortype?
-  - JS: csak a callback-ban dobunk hibat vagy a client.call_method-ban is mar?
 
 - *Generator
   - optimalizalt kodgeneralas, ha 

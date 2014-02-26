@@ -1,6 +1,4 @@
-# FIXME: id-kent nem lehet this, self, stb.
-# FIXME: Serializer/DeserializerException msg-k egysegesitese a generatorok kozott
-
+import os
 import os.path
 
 from abc import ABCMeta, abstractmethod
@@ -31,6 +29,14 @@ class GeneratorBase(metaclass = ABCMeta):
         self._gtm = GeneratorTypeManager()
         self._filename = None
         self._content = None
+
+    def create_outdir(self):
+        try:
+            os.mkdir(self._outdir)
+        except FileExistsError:
+            pass
+        except OSError as e:
+            raise GeneratorException(e)
 
     @abstractmethod
     def gen_types(self):

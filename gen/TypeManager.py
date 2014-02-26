@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+from Constants import RESULT_FIELD_NAME
 from ParserInternalException import ParserInternalException
 from InternalException import InternalException
 
@@ -181,7 +182,7 @@ class Method:
         # Return value is handled by creating a struct with one element.
 
         if self._out_req != None:
-            field = Field(0, self._out_req, self._out_dtype, "result")
+            field = Field(0, self._out_req, self._out_dtype, RESULT_FIELD_NAME)
             self._out_struct.add_field(field)
 
 class Field:

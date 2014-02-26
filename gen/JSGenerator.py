@@ -1,9 +1,3 @@
-# FIXME: bh generation for methods -> Client.js utanahuzas
-# FIXME: exc seri -> throw method, es akkor dobja ez a kivetelt (throw polimorphically...) -> Client.js utanahuzas
-# FIXME: privat functionok/classname-k? (pl. _myrpc...?)
-# FIXME: myrpc namespace -> error lesz belole
-# FIXME: getter, setter: this conflict! + kw conflict!
-
 import re
 
 from Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE
@@ -19,6 +13,7 @@ _ARGS_RESULT_SERI_SFA = StructFieldAccess.UNDERSCORE
 _STRUCT_READ = "{}read".format(MYRPC_PREFIX)
 _STRUCT_WRITE = "{}write".format(MYRPC_PREFIX)
 _STRUCT_VALIDATE = "{}validate".format(U_MYRPC_PREFIX)
+_NS_SEPARATOR = "."
 
 class JSGenerator(GeneratorBase):
     """Generator for JavaScript."""
@@ -36,7 +31,7 @@ class JSGenerator(GeneratorBase):
         self._result_seri_classp = "{}.{}result_seri".format(self._dtype_classp, MYRPC_PREFIX)
         self._codec_dtype_classp = "myrpc.codec.DataType"
         self._client_classn = "{}.Client".format(self._namespace)
-        self._exc_handler_classp = "{}.ClientUtil.exc_handler".format(self._namespace)
+        self._exc_handler_funcp = "{}exc_handler".format(U_MYRPC_PREFIX)
 
         self._setup_dtype_kinds()
 
@@ -44,6 +39,26 @@ class JSGenerator(GeneratorBase):
         self._open(_TYPES_FILENAME)
 
         self._whdr()
+
+        # Create JavaScript namespace. Types.js should be included first,
+        # before any other generated files.
+
+        sb = StringBuilder()
+
+        compl = self._namespace.split(_NS_SEPARATOR)
+
+        for i in range(len(compl)):
+            current_namespace = compl[i]
+            parent_namespace = "window" if i == 0 else _NS_SEPARATOR.join(compl[:i])
+
+            sb.wl("if (!(\"{0}\" in {1})) {1}{2}{0} = {{}};".format(current_namespace, parent_namespace, _NS_SEPARATOR))
+
+        sb.we()
+
+        sb.wl("{} = {{}};".format(self._dtype_classp))
+        sb.we()
+
+        self._ws(sb.get_string())
 
         self._gen_types()
         self._gen_args_result_seri()
@@ -65,7 +80,7 @@ class JSGenerator(GeneratorBase):
 
     @staticmethod
     def validate_ns(ns):
-        for comp in ns.split("."):
+        for comp in ns.split(_NS_SEPARATOR):
             if not re.match(IDENTIFIER_RE, comp):
                 raise ValueError()
 
@@ -117,7 +132,7 @@ class JSGenerator(GeneratorBase):
             in_struct = method.get_in_struct()
             args_seri_classn = self._get_args_seri_classn(name)
             result_seri_classn = self._get_result_seri_classn(name)
-            exc_handler_classn = self._get_exc_handler_classn(name)
+            exc_handler_funcn = self._get_exc_handler_funcn(name)
 
             in_field_names = [field.get_name() for field in in_struct.get_fields()]
             args = ["arg_{}".format(in_field_name) for in_field_name in in_field_names]
@@ -147,7 +162,7 @@ class JSGenerator(GeneratorBase):
             sb.wl("\tresult_seri = new {}();".format(result_seri_classn))
             sb.we()
 
-            sb.wl("\texc_handler = new {}();".format(exc_handler_classn))
+            sb.wl("\texc_handler = this.{};".format(exc_handler_funcn))
             sb.we()
 
             sb.wl("\tthis._client.call(\"{}\", args_seri, result_seri, exc_handler, {}, this);".format(name, _ONCONTINUE))
@@ -173,16 +188,13 @@ class JSGenerator(GeneratorBase):
         for method in methods:
             name = method.get_name()
             excs = method.get_excs()
-            classn = self._get_exc_handler_classn(name)
+            funcn = self._get_exc_handler_funcn(name)
 
-            sb.wl("{} = function()".format(classn))
+            sb.wl("{}.prototype.{} = function(codec, name)".format(self._client_classn, funcn))
             sb.wl("{")
-            sb.wl("\tthis._exc = null;")
-            sb.wl("};")
+            sb.wl("\tvar exc;")
             sb.we()
 
-            sb.wl("{}.prototype.read = function(codec, name)".format(classn))
-            sb.wl("{")
             sb.wl("\tswitch (name) {")
 
             for exc in excs:
@@ -190,7 +202,7 @@ class JSGenerator(GeneratorBase):
 
                 sb.wl("\t\tcase \"{}\":".format(exc_name))
 
-                s = self._gtm.read_dtype(exc, "this._exc")
+                s = self._gtm.read_dtype(exc, "exc")
                 sb.wlsindent("\t\t\t", s)
 
                 sb.wl("\t\t\tbreak;")
@@ -199,16 +211,13 @@ class JSGenerator(GeneratorBase):
             sb.wl("\t\tdefault:")
             sb.wl("\t\t\tthrow new myrpc.common.MessageHeaderException(\"Unknown exception name \" + name);")
             sb.wl("\t}")
+            sb.we()
+
+            sb.wl("\treturn exc;")
             sb.wl("};")
             sb.we()
 
-            sb.wl("{}.prototype.throw = function()".format(classn))
-            sb.wl("{")
-            sb.wl("\tthrow this._exc;")
-            sb.wl("};")
-            sb.we()
-
-        self._ws(sb.get_string())
+        self._ws(sb.get_string())    
 
     def _setup_dtype_kinds(self):
         dtype_kinds = {
@@ -678,9 +687,9 @@ class JSGenerator(GeneratorBase):
 
         return classn
 
-    def _get_exc_handler_classn(self, name):
-        classn = "{}_{}".format(self._exc_handler_classp, name)
+    def _get_exc_handler_funcn(self, name):
+        funcn = "{}_{}".format(self._exc_handler_funcp, name)
 
-        return classn
+        return funcn
 
 GeneratorBase.register_gen("js", JSGenerator)

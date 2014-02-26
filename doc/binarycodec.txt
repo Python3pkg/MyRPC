@@ -1,3 +1,5 @@
+FIXME: finish doc
+
 Binary codec implementation notes:
  - Message type is 8 bits.
  - Field identifiers are 16 bits.

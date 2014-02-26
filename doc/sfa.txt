@@ -1,3 +1,5 @@
+FIXME: finish doc
+
 sfa		var_name	getter_name/setter_name		problems
 ------------------------------------------------------------------------
 underscore	_var		get_var()/set_var()		no conflict: OK

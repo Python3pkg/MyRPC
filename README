@@ -1,0 +1,22 @@
+MyRPC: RPC Framework for Distributed Computing
+
+Hi Folks,
+
+This is my version of an RPC framework.
+
+Features:
+
+- No external dependencies.
+- Multi-platform capability (currently only Python >= 3 server and
+  JavaScript client are supported).
+- IDL-based client/server stub generation.
+- Binary capable (no need for escaping of binary data).
+- Single roundtrip protocol, ideal for HTTP.
+- Support various data types: string, binary, signed and unsigned
+  integer, float, list, struct and enum.
+- All data typs are supported on all platforms.
+- Support exceptions.
+- Correct input validation of the received messages.
+
+(This framework heavily borrows ideas from Apache Thirft, however
+it is written from scratch).

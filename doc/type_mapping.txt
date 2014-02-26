@@ -1,8 +1,10 @@
+FIXME: finish doc
+
 MyRPC          Python                       JavaScript
 ------------------------------------------------------
 binary         bytes                        Uint8Array
 string         str                          string
-bool           FIXME (True, False)          boolean (true, false)
+bool           True, False                  true, false
 ui8            int                          number
 ui16           int                          number
 ui32           int                          number

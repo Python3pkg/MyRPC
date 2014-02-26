@@ -1,17 +1,13 @@
-# FIXME: jelenleg meg ne csinaljunk namespace alkonyvtarakat (__init__.py all import)
-# FIXME: put PyGenerator+JSGenerator common code to GeneratorBase
-# FIXME: privat functionok/classname-k? (pl. _myrpc...?)
-# FIXME: getter, setter: self conflict! + kw conflict!
-# FIXME: myrpc namespace: gond lehet belole...
-# FIXME: indent usage... (js is)
-
+import os
+import os.path
 import re
 
-from Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE
+from Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, ENCODING, IDENTIFIER_RE, RESULT_FIELD_NAME
 from GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
 from TypeManager import DataTypeKind
 from InternalException import InternalException
 
+_INIT_FILENAME = "__init__.py"
 _TYPES_MODULE = "Types"
 _TYPES_FILENAME = "{}.py".format(_TYPES_MODULE)
 _PROCESSOR_FILENAME = "Processor.py"
@@ -19,6 +15,7 @@ _ARGS_RESULT_SERI_SFA = StructFieldAccess.UNDERSCORE
 _STRUCT_READ = "{}read".format(MYRPC_PREFIX)
 _STRUCT_WRITE = "{}write".format(MYRPC_PREFIX)
 _STRUCT_VALIDATE = "{}validate".format(U_MYRPC_PREFIX)
+_NS_SEPARATOR = "."
 
 class PyGenerator(GeneratorBase):
     """Generator for Python."""
@@ -36,6 +33,31 @@ class PyGenerator(GeneratorBase):
         self._codec_dtype_classp = "myrpc.codec.CodecBase.DataType"
 
         self._setup_dtype_kinds()
+
+    def create_outdir(self):
+        # Create Python package subdirectories according to namespace.
+
+        compl = self._namespace.split(_NS_SEPARATOR)
+
+        for i in range(len(compl) + 1):
+            dirname = os.path.join(self._outdir, *compl[:i])
+
+            try:
+                os.mkdir(dirname)
+            except FileExistsError:
+                pass
+            except OSError as e:
+                raise GeneratorException(e)
+
+            if i > 0:
+                try:
+                    filename = os.path.join(dirname, _INIT_FILENAME)
+                    f = open(filename, mode = "xt", encoding = ENCODING)
+                    f.close()
+                except OSError as e:
+                    raise GeneratorException(e)
+
+        self._outdir = dirname # FIXME: create new variable?
 
     def gen_types(self):
         self._open(_TYPES_FILENAME)
@@ -82,7 +104,7 @@ class PyGenerator(GeneratorBase):
 
     @staticmethod
     def validate_ns(ns):
-        for comp in ns.split("."):
+        for comp in ns.split(_NS_SEPARATOR):
             if not re.match(IDENTIFIER_RE, comp):
                 raise ValueError()
 
@@ -152,7 +174,7 @@ class PyGenerator(GeneratorBase):
         methods = self._sort_by_name(self._methods)
 
         sb.wl("class Processor:")
-        sb.wl("\tdef __init__(self, tr, codec, impl):")
+        sb.wl("\tdef __init__(self, impl):")
         sb.wl("\t\tself._impl = impl")
         sb.we()
 
@@ -162,17 +184,18 @@ class PyGenerator(GeneratorBase):
 
         for (i, method) in enumerate(methods):
             name = method.get_name()
+            args_seri_classn = self._get_args_seri_classn(name, classn_prefix)
 
-            sb.wl("\t\t\t\"{0}\": (self._args_seri_create_{0}, self._handle_{0}){1}".format(name, "," if i < lasti else ""))
+            sb.wl("\t\t\t\"{0}\": ({1}, self._handle_{0}){2}".format(name, args_seri_classn, "," if i < lasti else ""))
 
         sb.wl("\t\t}")
         sb.we()
 
-        sb.wl("\t\tself._proc = ProcessorSubr(tr, codec, methodmap)")
+        sb.wl("\t\tself._proc = ProcessorSubr(methodmap)")
         sb.we()
 
-        sb.wl("\tdef process_one(self):")
-        sb.wl("\t\tself._proc.process_one()")
+        sb.wl("\tdef process_one(self, tr, codec):")
+        sb.wl("\t\tself._proc.process_one(tr, codec)")
         sb.we()
 
         for method in methods:
@@ -180,14 +203,7 @@ class PyGenerator(GeneratorBase):
             in_struct = method.get_in_struct()
             excs = method.get_excs()
             has_result = method.has_result()
-            args_seri_classn = self._get_args_seri_classn(name, classn_prefix)
             result_seri_classn = self._get_result_seri_classn(name, classn_prefix)
-
-            sb.wl("\tdef _args_seri_create_{}(self):".format(name))
-            sb.wl("\t\targs_seri = {}()".format(args_seri_classn))
-            sb.we()
-            sb.wl("\t\treturn args_seri")
-            sb.we()
 
             sb.wl("\tdef _handle_{}(self, args_seri):".format(name))
 
@@ -202,7 +218,9 @@ class PyGenerator(GeneratorBase):
 
                 sb.wl("\t\t{}".format(getter_invoke))
 
-            sb.we() # FIXME: extra nl if no arg # FIXME: no exc method?
+            if len(in_field_names) > 0:
+                sb.we()
+
             sb.wl("\t\texc_name = None")
             sb.we()
 
@@ -232,7 +250,7 @@ class PyGenerator(GeneratorBase):
             sb.wl("\t\t\tresult_seri = {}()".format(result_seri_classn))
 
             if has_result:
-                setter_invoke = self._get_struct_field_setter_invoke("result_seri", "result", "r", _ARGS_RESULT_SERI_SFA) # FIXME: result: constant?: TypeManager
+                setter_invoke = self._get_struct_field_setter_invoke("result_seri", RESULT_FIELD_NAME, "r", _ARGS_RESULT_SERI_SFA)
                 sb.wl("\t\t\t{}".format(setter_invoke))
 
             sb.we()
@@ -331,7 +349,7 @@ class PyGenerator(GeneratorBase):
         sb.wl("\tvalues = ({})".format(valuesf))
         sb.we()
 
-        sb.wl("\tif v not in values:") # FIXME: not in
+        sb.wl("\tif v not in values:")
         sb.wl("\t\tmsg = \"Enum {} unknown value {{}}\".format(v)".format(dtype_name))
         sb.we()
         sb.wl("\t\tif is_read:")

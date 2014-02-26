@@ -18,5 +18,5 @@ Features:
 - Support exceptions.
 - Correct input validation of the received messages.
 
-(This framework heavily borrows ideas from Apache Thirft, however
+(This framework heavily borrows ideas from Apache Thrift, however
 it is written from scratch).

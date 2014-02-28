@@ -384,7 +384,7 @@ class JSGenerator(GeneratorBase):
         sb.wl("{")
         sb.wl("\tcodec.write_list_begin(l.length, {});".format(codec_dtype_classn))
         sb.we()
-        sb.wl("\tl.foreach(function(elem) {")
+        sb.wl("\tl.forEach(function(elem) {")
 
         s = self._gtm.write_dtype(elem_dtype, "elem")
         sb.wlsindent("\t\t", s)

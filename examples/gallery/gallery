@@ -1,0 +1,310 @@
+#!/usr/local/bin/python3.3
+#
+# MyRPC: Gallery demo.
+
+import http.client
+import io
+import mimetypes
+import os.path
+import sys
+import wsgiref.simple_server
+
+import PIL.Image
+
+# This example is designed to be directly runnable from its directory.
+
+sys.path.append("../../lib/py")
+
+# Import MyRPC infrastructure.
+
+from myrpc.transport.MemoryTransport import MemoryTransport
+from myrpc.codec.BinaryCodec import BinaryCodec
+
+# Import generated Processor and Types.
+
+from GalleryService.Processor import Interface, Processor
+from GalleryService.Types import ImageInfo, UnknownFormat, SizeTooLarge
+
+INDEX = "index.html"
+WWW_DIR = "www"
+WWW_FILES = (# Main page:
+             INDEX,
+             # MyRPC runtime libraries:
+             "myrpc/Common.js",
+             "myrpc/TransportBase.js",
+             "myrpc/HTTPClientTransport.js",
+             "myrpc/CodecBase.js",
+             "myrpc/BinaryCodec.js",
+             "myrpc/ClientSubr.js",
+             # Generated stuff:
+             "gen/Types.js",
+             "gen/Client.js",
+             # Application specific:
+             "gallery.js")
+ENCODING = "utf-8"
+CONTENT_TYPE = "Content-Type"
+MAX_WIDTH = 1024
+MAX_HEIGHT = 768
+THUMBNAIL_SIZE = (150, 150)
+IMGFORMAT = "JPEG"
+IMGCONTENT_TYPE = "image/jpeg"
+THUMB_URL = "/thumb_img/"
+NORMAL_URL = "/normal_img/"
+
+class Image:
+    """Image object encapsulates ImageInfo, thumbnail image and normal-sized image."""
+
+    def __init__(self, info, thumb_imgbuf, normal_imgbuf):
+        self._info = info
+        self._thumb_imgbuf = thumb_imgbuf
+        self._normal_imgbuf = normal_imgbuf
+
+    def get_info(self):
+        return self._info
+
+    def get_thumb_imgbuf(self):
+        return self._thumb_imgbuf
+
+    def get_normal_imgbuf(self):
+        return self._normal_imgbuf
+
+class GalleryServiceImpl(Interface):
+    """Implementation of GalleryService."""
+
+    def __init__(self):
+        self._next_imgid = 0
+
+    def list_image_info(self, skip_imgid):
+        l = []
+
+        for imgid in sorted(imgstore.keys()):
+            image = imgstore[imgid]
+            info = image.get_info()
+
+            if skip_imgid == None or imgid > skip_imgid:
+                l.append(info)
+
+        # According to the IDL, list of ImageInfo elements have to be returned.
+
+        return l
+
+    def upload_image(self, imgbuf):
+        inbuf = io.BytesIO(imgbuf)
+
+        # Open image.
+
+        try:
+            normal_img = PIL.Image.open(inbuf)
+        except OSError as e:
+            raise UnknownFormat()
+
+        # Check image dimensions.
+
+        (width, height) = normal_img.size
+        if (width > MAX_WIDTH or
+            height > MAX_HEIGHT):
+            e = SizeTooLarge()
+            e.set_max_width(MAX_WIDTH)
+            e.set_max_height(MAX_HEIGHT)
+            raise e
+
+        # Recode normal image to jpeg.
+
+        outbuf = io.BytesIO()
+        normal_img.save(outbuf, IMGFORMAT)
+        normal_imgbuf = outbuf.getvalue()
+
+        # Create thumbnail.
+
+        thumb_img = normal_img.copy()
+        thumb_img.thumbnail(THUMBNAIL_SIZE, PIL.Image.ANTIALIAS)
+        (width, height) = thumb_img.size
+
+        outbuf = io.BytesIO()
+        thumb_img.save(outbuf, IMGFORMAT)
+        thumb_imgbuf = outbuf.getvalue()
+
+        # Create image object and store it.
+
+        imgid = self._next_imgid
+        self._next_imgid += 1
+
+        info = ImageInfo()
+        info.set_imgid(imgid)
+        info.set_thumb_width(width)
+        info.set_thumb_height(height)
+
+        image = Image(info, thumb_imgbuf, normal_imgbuf)
+        imgstore[imgid] = image
+
+class ResourceNotFound(Exception):
+    """Thrown if HTTP resource is not found."""
+
+    pass
+
+def handle_rpc(environ, start_response):
+    """This method is responsible for MyRPC<->WSGI interfacing."""
+
+    try:
+        in_bodylen = int(environ["CONTENT_LENGTH"])
+    except (KeyError, ValueError):
+        in_bodylen = None
+
+    in_body = environ["wsgi.input"].read(in_bodylen)
+
+    tr = MemoryTransport(in_body)
+    proc.process_one(tr, codec)
+    out_body = tr.get_value()
+
+    status = "{} OK".format(http.client.OK)
+    response_headers = [(CONTENT_TYPE, "application/octet-stream")]
+
+    start_response(status, response_headers)
+
+    return [out_body]
+
+def handle_image(environ, start_response, imgid_str, show_normal):
+    """Retrieve images from imgstore."""
+
+    # Convert string to integer.
+
+    try:
+        imgid = int(imgid_str)
+    except ValueError:
+        raise ResourceNotFound()
+
+    # Lookup imgid in imgstore.
+
+    try:
+        image = imgstore[imgid]
+    except KeyError:
+        raise ResourceNotFound()
+
+    imgbuf = image.get_normal_imgbuf() if show_normal else image.get_thumb_imgbuf()
+
+    status = "{} OK".format(http.client.OK)
+    response_headers = [(CONTENT_TYPE, IMGCONTENT_TYPE)]
+
+    start_response(status, response_headers)
+
+    return [imgbuf]
+
+def handle_static(environ, start_response, path_info):
+    """Handle static files."""
+
+    filename = get_static_filename(path_info)
+    if filename == None:
+        raise ResourceNotFound()
+
+    fullname = os.path.join(WWW_DIR, filename)
+
+    (mimetype, encoding) = mimetypes.guess_type(filename)
+
+    f = open(fullname, mode = "rb")
+    buf = f.read()
+    f.close()
+
+    # FIXME: Add utf-8 encoding header for text files.
+
+    status = "{} OK".format(http.client.OK)
+    headers = [(CONTENT_TYPE, mimetype)]
+
+    start_response(status, headers)
+
+    return [buf]
+
+def handle_notfound(environ, start_response):
+    """Handle not-existent resouces."""
+
+    status = "{} Not Found".format(http.client.NOT_FOUND)
+    headers = [(CONTENT_TYPE, "text/html")]
+
+    start_response(status, headers)
+
+    body = "<html><head><title>Not Found</title></head><body>The requested resource is not found.</body></html>"
+
+    return [body.encode(ENCODING)]
+
+def get_static_filename(path_info):
+    filename = None
+
+    if path_info == "/":
+        filename = INDEX
+    else:
+        path_info_stripped = path_info[1:]
+        if path_info_stripped in WWW_FILES:
+            filename = path_info_stripped
+
+    return filename
+
+def process_request(environ, start_response):
+    """Process one HTTP request."""
+
+    path_info = environ["PATH_INFO"]
+    method = environ["REQUEST_METHOD"]
+
+    r = None
+
+    if method == "POST":
+        if path_info == "/rpc":
+            r = handle_rpc(environ, start_response)
+    elif method == "GET":
+        # The images are fetched using normal GET requests, and not by
+        # rpc (<img> tags are simple to use).
+
+        if path_info.startswith(THUMB_URL):
+            imgid_str = path_info[len(THUMB_URL):]
+            r = handle_image(environ, start_response, imgid_str, False)
+        elif path_info.startswith(NORMAL_URL):
+            imgid_str = path_info[len(NORMAL_URL):]
+            r = handle_image(environ, start_response, imgid_str, True)
+        else:
+            r = handle_static(environ, start_response, path_info)
+
+    # FIXME: Return method not allowed.
+
+    if r == None:
+        raise ResourceNotFound()
+
+    return r
+
+def app(environ, start_response):
+    """WSGI application entry point."""
+
+    try:
+        r = process_request(environ, start_response)
+    except ResourceNotFound:
+        r = handle_notfound(environ, start_response)
+
+    return r
+
+# Parse port argument.
+# FIXME: Check for 0-65535.
+
+if len(sys.argv) != 2:
+    print("{}: port should be specified".format(sys.argv[0]), file = sys.stderr)
+    sys.exit(1)
+
+try:
+    port = int(sys.argv[1])
+except ValueError:
+    print("{}: can't parse port".format(sys.argv[0]))
+    sys.exit(1)
+
+# Instantiate imgstore, which holds Image objects. Images are
+# simply stored in memory.
+
+imgstore = {}
+
+# Instantiate service implementation, processor and codec.
+
+impl = GalleryServiceImpl()
+proc = Processor(impl)
+codec = BinaryCodec()
+
+# Start server.
+
+server = wsgiref.simple_server.make_server("", port, app)
+print("Serving requests on port {}...".format(port))
+
+server.serve_forever()

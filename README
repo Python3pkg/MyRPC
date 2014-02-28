@@ -6,17 +6,29 @@ This is my version of an RPC framework.
 
 Features:
 
-- No external dependencies.
-- Multi-platform capability (currently only Python >= 3 server and
-  JavaScript client are supported).
-- IDL-based client/server stub generation.
-- Binary capable (no need for escaping of binary data).
-- Single roundtrip protocol, ideal for HTTP.
-- Support various data types: string, binary, signed and unsigned
-  integer, float, list, struct and enum.
-- All data typs are supported on all platforms.
-- Support exceptions.
-- Correct input validation of the received messages.
+ - No external dependencies.
+ - Multi-platform capability (see below).
+ - IDL-based client/server stub generation.
+ - Binary capable (no need for escaping of binary data).
+ - Single roundtrip protocol, ideal for HTTP.
+ - Support various data types: string, binary, signed and unsigned
+   integer, float, list, struct and enum.
+ - All data typs are supported on all platforms.
+ - Support exceptions.
+ - Correct input validation of the received messages.
+ - Legacy free code (since we are new :).
 
 (This framework heavily borrows ideas from Apache Thrift, however
-it is written from scratch).
+it is redesigned & rewritten from scratch).
+
+Requirement:
+
+ - The only requirement is a basic installation of Python >= 3.3. It
+   is needed by the code generator tool (myrpcgen).
+
+Currently, code generation is supported for the following targets:
+
+ - Python (>= 3): only server-side stub.
+ - JavaScript: only client-side stub.
+
+Sample code: check out the examples directory.

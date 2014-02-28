@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MyRPC: Gallery demo</title>
+
+    <script src="myrpc/Common.js"></script>
+    <script src="myrpc/TransportBase.js"></script>
+    <script src="myrpc/HTTPClientTransport.js"></script>
+    <script src="myrpc/CodecBase.js"></script>
+    <script src="myrpc/BinaryCodec.js"></script>
+    <script src="myrpc/ClientSubr.js"></script>
+    <script src="gen/Types.js"></script>
+    <script src="gen/Client.js"></script>
+    <script src="gallery.js"></script>
+
+    <style>
+      img {
+        margin: 20px;
+      }
+    </style>  
+  </head>
+
+  <body onload="init()">
+    <h1>MyRPC: Gallery demo</h1>
+    <p>
+      This is an example demonstrating how you can use MyRPC to create a simple
+      web/ajax-based picture gallery application. Try to upload an image and see
+      what happens... :)
+    </p>
+
+    <p>
+      You can access the source <a href="https://github.com/bandipapa/MyRPC/tree/master/examples/gallery">here</a>.
+    </p>
+    <hr/>
+
+    <h1>File upload</h1>
+    Input file: <input type="file" id="fileelem"/>
+    <input type="button" value="Upload" onclick="upload()" id="buttonelem"/>
+    <hr/>
+
+    <h1>Images</h1>
+    <div id="listelem">
+    </div>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+# IDL description for GalleryService.
+
+# Namespace declarations.
+
+namespace js GalleryService
+namespace py GalleryService
+
+# list_image_info method: list info about all uploaded images.
+#
+# Input argument;
+#  - skip_imgid (optional): if present, then only ImageInfos with imgid
+#                           greater than skip_imgid will be returned,
+#                           otherwise (null), all ImageInfos will be returned.
+#
+# Returns: list of ImageInfo structs.
+
+beginstruct ImageInfo
+    field 0 required ui16 imgid
+    field 1 required ui16 thumb_width
+    field 2 required ui16 thumb_height
+endstruct
+
+list ImageInfoList ImageInfo
+
+beginmethod list_image_info
+    in 0 optional ui16 skip_imgid
+    out required ImageInfoList
+endmethod
+
+# upload_image method: upload an image.
+#
+# Input argument:
+#  - imgbuf: binary image data.
+#
+# Throws:
+#  - UnknownFormat: if the image format is unknown,
+#  - SizeTooLarge: if the image dimensions are too large.
+
+beginexception UnknownFormat
+endexception
+
+beginexception SizeTooLarge
+    field 0 required ui16 max_width
+    field 1 required ui16 max_height
+endexception
+
+beginmethod upload_image
+    in 0 required binary imgbuf
+    throw UnknownFormat
+    throw SizeTooLarge
+endmethod

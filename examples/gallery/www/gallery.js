@@ -21,9 +21,12 @@ function refresh()
 
     client.list_image_info(last_imgid, function() {
 	try {
-	    // According to the IDL, list_image_info returns with a list of ImageInfo elements.
+	    // This function is called when the RPC call is finished. According
+	    // to the IDL, list_image_info returns with a list of ImageInfo elements.
+	    // By calling client.myrpc_continue() we can retrieve this list.
 
 	    var l = client.myrpc_continue();
+
 	    var listelem = document.getElementById("listelem");
 
 	    l.forEach(function(info) {
@@ -50,6 +53,8 @@ function refresh()
 		    last_imgid = imgid;
 	    });
 	} catch (e) {
+	    // Exception handling for client.myrpc_continue().
+
 	    if (e instanceof myrpc.common.ServerErrorException) {
 		var msg = e.get_msg();
 
@@ -88,12 +93,17 @@ function upload()
 
 	client.upload_image(imgbuf, function() {
 	    try {
+		// upload_image doesn't have return value, but can throw
+		// exceptions, see catch below (UnknownFormat, SizeTooLarge).
+
 		client.myrpc_continue();
 
 		// If image upload is successful, then refresh our image list.
 
 		refresh();
 	    } catch (e) {
+		// Exception handling for client.myrpc_continue().
+
 		if (e instanceof GalleryService.Types.UnknownFormat) {
 		    alert("GalleryService reply: Image format is unknown");
 		} else if (e instanceof GalleryService.Types.SizeTooLarge) {

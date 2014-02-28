@@ -20,7 +20,9 @@ uploaded images are simply stored in the webserver memory.
 Source code files:
 
  gallery                Contains a standalone webserver and the implementation of
-                        GalleryService.
+                        GalleryService. Most of the code deals with the HTTP
+                        infrastructure & static file serving, the MyRPC relevant
+                        parts are: GalleryServiceImpl class and handle_rpc method.
 
  gallery.idl            Interface description of GalleryService.
 

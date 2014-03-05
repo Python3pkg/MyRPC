@@ -12,8 +12,8 @@ Features:
  - Binary capable (no need for escaping of binary data).
  - Single roundtrip protocol, ideal for HTTP.
  - Support various data types: string, binary, signed and unsigned
-   integer, float, list, struct and enum.
- - All data typs are supported on all platforms.
+   integers, float, list, struct and enum.
+ - All data types are supported on all platforms.
  - Support exceptions.
  - Correct input validation of the received messages.
  - Legacy free code (since we are new :).

@@ -52,7 +52,7 @@ THUMB_URL = "/thumb_img/"
 NORMAL_URL = "/normal_img/"
 
 class Image:
-    """Image object encapsulates ImageInfo, thumbnail image and normal-sized image."""
+    """Image object encapsulates ImageInfo, thumbnail and normal-sized image."""
 
     def __init__(self, info, thumb_imgbuf, normal_imgbuf):
         self._info = info
@@ -288,7 +288,7 @@ if len(sys.argv) != 2:
 try:
     port = int(sys.argv[1])
 except ValueError:
-    print("{}: can't parse port".format(sys.argv[0]))
+    print("{}: can't parse port".format(sys.argv[0]), file = sys.stderr)
     sys.exit(1)
 
 # Instantiate imgstore, which holds Image objects. Images are

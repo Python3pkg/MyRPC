@@ -52,23 +52,27 @@ Python
 Enumeration
 ^^^^^^^^^^^
 
-.. FIXME
+If we have the following in IDL::
 
-Generated::
+  beginenum Status
+      entry OK
+      entry FIRST_ERROR
+      entry SECOND_ERROR 42
+  endenum
 
- class typename:
-    name1 = value1
-    ...
+The generated code will look like:
+
+.. code-block:: python
+
+  class Status:
+      OK = 0
+      FIRST_ERROR = 1
+      SECOND_ERROR = 42
 
 Structure and exception
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. FIXME
-
-Generated::
-
- class typename:
-    ... _set/get
+FIXME
 
 .. _typemapping-js:
 
@@ -83,21 +87,27 @@ FIXME: limited to ...
 Enumeration
 ^^^^^^^^^^^
 
-.. FIXME
+If we have the following in IDL::
 
-Generated::
+  namespace js MyService
 
- typename = {
-    name1: value2
-    ...
- };
+  beginenum Status
+      entry OK
+      entry FIRST_ERROR
+      entry SECOND_ERROR 42
+  endenum
+
+The generated code will look like:
+
+.. code-block:: javascript
+
+  MyService.Types.Status = {
+      OK: 0,
+      FIRST_ERROR: 1,
+      SECOND_ERROR: 42
+  };
 
 Structure and exception
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. FIXME
-
-Generated::
-
- typename = function()
-   ... set/get
+FIXME

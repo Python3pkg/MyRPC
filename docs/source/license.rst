@@ -1,3 +1,6 @@
+License
+=======
+
 Copyright (c) 2014, Szalai András
 All rights reserved.
 

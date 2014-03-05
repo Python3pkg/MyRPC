@@ -15,3 +15,4 @@ Contents:
    install
    typemapping
    binarycodec
+   license

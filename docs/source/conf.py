@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'MyRPC'
-copyright = '2014, Szalai Andras'
+copyright = u'2014, Szalai András'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -101,7 +101,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
+html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -200,7 +200,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'MyRPC.tex', 'MyRPC Documentation',
-   'Szalai Andras', 'manual'),
+   u'Szalai András', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -230,7 +230,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'myrpc', 'MyRPC Documentation',
-     ['Szalai Andras'], 1)
+     [u'Szalai András'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -244,7 +244,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'MyRPC', 'MyRPC Documentation',
-   'Szalai Andras', 'MyRPC', 'One line description of project.',
+   u'Szalai András', 'MyRPC', 'One line description of project.',
    'Miscellaneous'),
 ]
 

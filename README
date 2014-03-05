@@ -32,3 +32,4 @@ Currently, code generation is supported for the following targets:
  - JavaScript: only client-side stub.
 
 Sample code: check out the examples directory.
+Docs (in progress): http://myrpc.readthedocs.org

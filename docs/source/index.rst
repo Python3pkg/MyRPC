@@ -11,6 +11,7 @@ Contents:
 
    features
    install
+   targets
    typemapping
    binarycodec
    examples

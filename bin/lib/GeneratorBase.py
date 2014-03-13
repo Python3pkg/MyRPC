@@ -3,8 +3,8 @@ import os.path
 
 from abc import ABCMeta, abstractmethod
 
-from Constants import VERSION, ENCODING
-from InternalException import InternalException
+from myrpcgen.Constants import VERSION, ENCODING
+from myrpcgen.InternalException import InternalException
 
 class StructFieldAccess:
     """What kind of getter/setter will be generated?"""

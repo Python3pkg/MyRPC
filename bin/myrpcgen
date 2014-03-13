@@ -1,16 +1,16 @@
-#!/usr/local/bin/python3.3
+#!python
 
 import argparse
 import sys
 
-from Constants import VERSION
-from GeneratorBase import StructFieldAccess, GeneratorBase, GeneratorException
-from Parser import Parser, ParserException
+from myrpcgen.Constants import VERSION
+from myrpcgen.GeneratorBase import StructFieldAccess, GeneratorBase, GeneratorException
+from myrpcgen.Parser import Parser, ParserException
 
 # Generators registers themshelves at import.
 
-import JSGenerator
-import PyGenerator
+import myrpcgen.JSGenerator
+import myrpcgen.PyGenerator
 
 INDENT = 4
 OUTDIR = "."

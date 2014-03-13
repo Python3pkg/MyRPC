@@ -1,1 +1,1 @@
-../../../../lib/js/myrpc/Common.js
+../../../../runtime/js/Common.js

@@ -2,10 +2,10 @@ import os
 import os.path
 import re
 
-from Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, ENCODING, IDENTIFIER_RE, RESULT_FIELD_NAME
-from GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
-from TypeManager import DataTypeKind
-from InternalException import InternalException
+from myrpcgen.Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, ENCODING, IDENTIFIER_RE, RESULT_FIELD_NAME
+from myrpcgen.GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
+from myrpcgen.TypeManager import DataTypeKind
+from myrpcgen.InternalException import InternalException
 
 _INIT_FILENAME = "__init__.py"
 _TYPES_MODULE = "Types"

@@ -1,1 +1,1 @@
-../../../../lib/js/myrpc/transport/HTTPClientTransport.js
+../../../../runtime/js/transport/HTTPClientTransport.js

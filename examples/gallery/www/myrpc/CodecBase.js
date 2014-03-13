@@ -1,1 +1,1 @@
-../../../../lib/js/myrpc/codec/CodecBase.js
+../../../../runtime/js/codec/CodecBase.js

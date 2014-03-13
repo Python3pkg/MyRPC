@@ -62,12 +62,12 @@ If we have the following in IDL::
 
 The generated code will look like:
 
-.. code-block:: python
+.. code-block:: py
 
-  class Status:
-      OK = 0
-      FIRST_ERROR = 1
-      SECOND_ERROR = 42
+   class Status:
+       OK = 0
+       FIRST_ERROR = 1
+       SECOND_ERROR = 42
 
 Structure and exception
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -82,7 +82,9 @@ JavaScript
 64 bit unsigned and signed integers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-FIXME: limited to ...
+Integers in JavaScript are limited to -2\ :sup:`53` ... 2\ :sup:`53`, however
+MyRPC runtime doesn't check range limitation. For more information, see
+http://ecma262-5.com/ELS5_HTML.htm#Section_8.5.
 
 Enumeration
 ^^^^^^^^^^^
@@ -99,13 +101,13 @@ If we have the following in IDL::
 
 The generated code will look like:
 
-.. code-block:: javascript
+.. code-block:: js
 
-  MyService.Types.Status = {
-      OK: 0,
-      FIRST_ERROR: 1,
-      SECOND_ERROR: 42
-  };
+   MyService.Types.Status = {
+       OK: 0,
+       FIRST_ERROR: 1,
+       SECOND_ERROR: 42
+   };
 
 Structure and exception
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,9 +1,9 @@
 import re
 
-from Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE
-from GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
-from TypeManager import DataTypeKind
-from InternalException import InternalException
+from myrpcgen.Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE
+from myrpcgen.GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
+from myrpcgen.TypeManager import DataTypeKind
+from myrpcgen.InternalException import InternalException
 
 _TYPES_FILENAME = "Types.js"
 _CLIENT_FILENAME = "Client.js"

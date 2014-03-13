@@ -1,6 +1,4 @@
 .. MyRPC documentation master file
-   FIXME: update vers in conf.py
-   FIXME: add doc link to /README
 
 MyRPC documentation
 ===================
@@ -15,4 +13,6 @@ Contents:
    install
    typemapping
    binarycodec
+   examples
+   bugreporting
    license

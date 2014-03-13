@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
-from Constants import RESULT_FIELD_NAME
-from ParserInternalException import ParserInternalException
-from InternalException import InternalException
+from myrpcgen.Constants import RESULT_FIELD_NAME
+from myrpcgen.ParserInternalException import ParserInternalException
+from myrpcgen.InternalException import InternalException
 
 _FID_STOP = 0xffff
 

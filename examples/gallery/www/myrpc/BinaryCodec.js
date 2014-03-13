@@ -1,1 +1,1 @@
-../../../../lib/js/myrpc/codec/BinaryCodec.js
+../../../../runtime/js/codec/BinaryCodec.js

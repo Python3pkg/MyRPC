@@ -1,9 +1,9 @@
 import re
 
-from Constants import RESERVED_PREFIXES, ENCODING, IDENTIFIER_RE
-from ParserInternalException import ParserInternalException
-from TypeManager import EnumType, ListType, StructType, ExcType, Method, Field, TypeManager
-from GeneratorBase import GeneratorBase
+from myrpcgen.Constants import RESERVED_PREFIXES, ENCODING, IDENTIFIER_RE
+from myrpcgen.ParserInternalException import ParserInternalException
+from myrpcgen.TypeManager import EnumType, ListType, StructType, ExcType, Method, Field, TypeManager
+from myrpcgen.GeneratorBase import GeneratorBase
 
 class ParserContext:
     """Parser context enum."""

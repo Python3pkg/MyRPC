@@ -69,10 +69,53 @@ The generated code will look like:
        FIRST_ERROR = 1
        SECOND_ERROR = 42
 
-Structure and exception
-^^^^^^^^^^^^^^^^^^^^^^^
+Structures and exceptions
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-FIXME
+MyRPC generated structure and exception classes behave exactly the
+same, with one exception: exception classes have *Exception* as their
+parent class, but structures don't have parent class.
+
+If we have the following in IDL::
+
+  namespace py MyService
+
+  beginstruct UserInfo
+      field 0 required string username
+      ...
+  endstruct
+
+  beginexception SizeTooLarge
+      field 0 required ui16 maxsize
+      ...
+  endexception
+
+*UserInfo* and *SizeTooLarge* can be instantiated as the following:
+
+.. code-block:: py
+
+   from MyService.Types import UserInfo, SizeTooLarge
+
+   obj = UserInfo()
+   exc = SizeTooLarge()
+
+.. FIXME: ref to myrpcgen tool doc
+
+Depending on *-f* option of myrpcgen, fields can be accessed as shown
+here:
+
++-------------+-----------------------------+--------------------------+
+| *-f* option | Getter invocation           | Setter invocation        |
++=============+=============================+==========================+
+| direct      | value = obj.username,       | obj.username = value,    |
+|             | value = exc.maxsize         | exc.maxsize = value      |
++-------------+-----------------------------+--------------------------+
+| capital     | value = obj.getUsername(),  | obj.setUsername(value),  |
+|             | value = exc.getMaxsize()    | exc.setMaxsize(value)    |
++-------------+-----------------------------+--------------------------+
+| underscore  | value = obj.get_username(), | obj.set_username(value), |
+|             | value = exc.get_maxsize()   | exc.set_maxsize(value)   |
++-------------+-----------------------------+--------------------------+
 
 .. _typemapping-js:
 
@@ -109,7 +152,47 @@ The generated code will look like:
        SECOND_ERROR: 42
    };
 
-Structure and exception
-^^^^^^^^^^^^^^^^^^^^^^^
+Structures and exceptions
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-FIXME
+MyRPC generated structure and exception objects behave exactly the
+same.
+
+If we have the following in IDL::
+
+  namespace js MyService
+
+  beginstruct UserInfo
+      field 0 required string username
+      ...
+  endstruct
+
+  beginexception SizeTooLarge
+      field 0 required ui16 maxsize
+      ...
+  endexception
+
+*UserInfo* and *SizeTooLarge* can be instantiated as the following:
+
+.. code-block:: js
+
+   var obj = new MyService.Types.UserInfo();
+   var exc = new MyService.Types.SizeTooLarge();
+
+.. FIXME: ref to myrpcgen tool doc
+
+Depending on *-f* option of myrpcgen, fields can be accessed as shown
+here:
+
++-------------+-----------------------------+--------------------------+
+| *-f* option | Getter invocation           | Setter invocation        |
++=============+=============================+==========================+
+| direct      | value = obj.username,       | obj.username = value,    |
+|             | value = exc.maxsize         | exc.maxsize = value      |
++-------------+-----------------------------+--------------------------+
+| capital     | value = obj.getUsername(),  | obj.setUsername(value),  |
+|             | value = exc.getMaxsize()    | exc.setMaxsize(value)    |
++-------------+-----------------------------+--------------------------+
+| underscore  | value = obj.get_username(), | obj.set_username(value), |
+|             | value = exc.get_maxsize()   | exc.set_maxsize(value)   |
++-------------+-----------------------------+--------------------------+

@@ -11,7 +11,7 @@ Requirements:
 * For building the examples, GNU Make >= 3.82 is required.
 
 The latest stable release of MyRPC can be downloaded from
-https://github.com/bandipapa/MyRPC/releases, look for rel-x.x.x tags.
+https://github.com/bandipapa/MyRPC/releases, look for *rel-x.x.x* tags.
 
 After unpacking the source distribution, change directory to MyRPC-rel-x.x.x.
 Here you can do system-wide installation (as root):

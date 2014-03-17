@@ -1,7 +1,7 @@
 BinaryCodec implementation notes
 ================================
 
-BinaryCodec has the following implementation details/limits:
+BinaryCodec has the following implementation details and limits:
 
 * Message type is 8 bits.
 * Field identifiers are 16 bits.

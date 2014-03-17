@@ -1,3 +1,5 @@
+.. _typemapping:
+
 Type mapping
 ============
 
@@ -43,6 +45,9 @@ The MyRPC IDL supports the following types, together with their language mapping
 
 .. [#py] See :ref:`typemapping-py` for more details.
 .. [#js] See :ref:`typemapping-js` for more details.
+
+Binary buffer, string, boolean, integer and floating point types are primitive
+types. Enumeration, list, structure and exception are user-defined types.
 
 .. _typemapping-py:
 

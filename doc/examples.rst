@@ -32,8 +32,6 @@ To start the demo:
 
 where 8080 is a portnumber, feel free to use any other.
 
-.. FIXME: Link escaping (and in all other files)
-
 Then point your browser at http://yourip:8080, and upload some images. The
 uploaded images are simply stored in memory (not saved to disk).
 

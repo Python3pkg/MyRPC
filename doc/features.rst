@@ -15,15 +15,17 @@ Short summary of MyRPC features:
 * Correct input validation of the received messages.
 * Legacy free code (since we are new :).
 
+.. _features-target:
+
 Target languages
 ----------------
 
 MyRPC supports the following target languages:
 
-+-------------+------------------------+------------------------+
-| Language    | Client stub generation | Server stub generation |
-+=============+========================+========================+
-| Python >= 3 | No                     | Yes                    |
-+-------------+------------------------+------------------------+
-| JavaScript  | Yes                    | No                     |
-+-------------+------------------------+------------------------+
++-------------+----------------+------------------------+------------------------+
+| Language    | Generator name | Client stub generation | Server stub generation |
++=============+================+========================+========================+
+| Python >= 3 | py             | No                     | Yes                    |
++-------------+----------------+------------------------+------------------------+
+| JavaScript  | js             | Yes                    | No                     |
++-------------+----------------+------------------------+------------------------+

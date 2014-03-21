@@ -38,7 +38,7 @@ for lang in RUNTIME_LANGS:
 # Run setup.
 
 setup(name = "MyRPC",
-      version = "0.0.2-dev",
+      version = "0.0.2",
       description = "RPC Framework for Distributed Computing",
       author = "Szalai András",
       author_email = "andrew@bandipapa.com",

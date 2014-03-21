@@ -31,6 +31,7 @@ directory:
 For more information about Distutils based installation, see
 http://docs.python.org/3/install/index.html.
 
-Language dependent runtime libraries will be installed into
-:file:`{prefix}/share/myrpc/runtime`, except for Python runtime, which will go
-into Python site-packages directory.
+MyRPC code generator tool will be installed into :file:`{prefix}/bin`, be
+sure to put this directory in your :envvar:`PATH`. Language dependent
+runtime libraries will be installed into :file:`{prefix}/share/myrpc/runtime`,
+except for Python runtime, which will go into Python site-packages directory.

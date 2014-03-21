@@ -1,6 +1,7 @@
 .. MyRPC documentation master file
 
-.. FIXME: myrpcgen tool doc
+.. FIXME: myrpcgen tool doc (:option:)
+.. FIXME: read+check text and examples
 
 MyRPC documentation
 ===================
@@ -15,6 +16,7 @@ Contents:
    idlintro
    typemapping
    generators
+   runtime
    validation
    binarycodec
    examples

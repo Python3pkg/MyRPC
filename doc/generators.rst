@@ -1,5 +1,4 @@
-.. FIXME: add client/processor apis per lang
-.. FIXME: MyService -> TopPackage.SubPackage csere
+.. FIXME: Add client/processor API description per generator.
 
 .. _generators:
 
@@ -67,7 +66,7 @@ parent class, but structures don't have parent class.
 
 If we have the following in IDL::
 
-  namespace py MyService
+  namespace py TopPackage.SubPackage
 
   beginstruct UserInfo
       field 0 required string username
@@ -83,12 +82,12 @@ If we have the following in IDL::
 
 .. code-block:: py
 
-   from MyService.Types import UserInfo, SizeTooLarge
+   from TopPackage.SubPackage.Types import UserInfo, SizeTooLarge
 
    obj = UserInfo()
    exc = SizeTooLarge()
 
-.. FIXME: ref to myrpcgen tool doc
+.. FIXME: Ref to myrpcgen tool doc.
 
 Depending on *-f* option of myrpcgen, fields can be accessed as shown
 here:
@@ -143,7 +142,7 @@ Enumeration
 
 If we have the following in IDL::
 
-  namespace js MyService
+  namespace js TopNS.SubNS
 
   beginenum Status
       entry OK
@@ -155,7 +154,7 @@ The generated code will look like (Types.js):
 
 .. code-block:: js
 
-   MyService.Types.Status = {
+   TopNS.SubNS.Types.Status = {
        OK: 0,
        FIRST_ERROR: 1,
        SECOND_ERROR: 42
@@ -169,7 +168,7 @@ same.
 
 If we have the following in IDL::
 
-  namespace js MyService
+  namespace js TopNS.SubNS
 
   beginstruct UserInfo
       field 0 required string username
@@ -185,10 +184,10 @@ If we have the following in IDL::
 
 .. code-block:: js
 
-   var obj = new MyService.Types.UserInfo();
-   var exc = new MyService.Types.SizeTooLarge();
+   var obj = new TopNS.SubNS.Types.UserInfo();
+   var exc = new TopNS.SubNS.Types.SizeTooLarge();
 
-.. FIXME: ref to myrpcgen tool doc
+.. FIXME: Ref to myrpcgen tool doc.
 
 Depending on *-f* option of myrpcgen, fields can be accessed as shown
 here:

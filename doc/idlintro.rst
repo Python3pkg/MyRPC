@@ -2,9 +2,10 @@
 .. FIXME: create calculator.idl file
 .. FIXME: or any user-defined types: but not exceptions
 .. FIXME: check examples for syntax/myrpcgen invocation
-.. FIXME: check&read
+.. FIXME: check&read (idlintro + generators)
 .. FIXME: s
 .. FIXME: client/processor terminology cleanup
+.. FIXME: keyword bold, valtozo dolt?/filenames?
 
 IDL introduction
 ================
@@ -28,7 +29,7 @@ Explanation:
 * One *namespace* declaration is needed per target language we would like
   to generate code for.
 * *py* is the name of target language (in this case it is Python). In
-  MyRPC slang it is called generator. For available generators, see
+  MyRPC terminology it is called generator. For available generators, see
   :ref:`features-target`.
 * *CalculatorService* is the name of Python package where the
   generated files will go into. Actually, the interpretation of namespace

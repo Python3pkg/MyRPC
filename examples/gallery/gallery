@@ -11,10 +11,6 @@ import wsgiref.simple_server
 
 import PIL.Image
 
-# This example is designed to be directly runnable from its directory.
-
-sys.path.append("../../lib/py")
-
 # Import MyRPC infrastructure.
 
 from myrpc.transport.MemoryTransport import MemoryTransport

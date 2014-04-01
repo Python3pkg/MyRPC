@@ -1,5 +1,4 @@
-# FIXME: content-length
-
+import http.client
 import io
 import urllib.request
 import urllib.error
@@ -33,11 +32,11 @@ class HTTPClientTransport(TransportBase):
     def write(self, buf):
         self._wf.write(buf)
 
-    def set_timeout(self, timeout):
-        self._timeout = timeout
-
     def set_opener(self, opener):
         self._opener = opener
+
+    def set_timeout(self, timeout):
+        self._timeout = timeout
 
     def _reset(self):
         self._rf = None
@@ -49,12 +48,26 @@ class HTTPClientTransport(TransportBase):
         req = urllib.request.Request(self._url, data = wbuf, method = "POST")
         req.add_header("Content-Type", "application/octet-stream")
 
-        opener = self._opener if self._opener else urllib.request.build_opener() # FIXME
+        opener = self._opener.open if self._opener else urllib.request.urlopen
 
         try:
-            resp = opener.open(req, timeout = self._timeout) # FIXME: timeout
-        except urllib.error.URLError as e:
-            raise TransportException(str(e)) # FIXME: exc
+            resp = opener(req, timeout = self._timeout)
+            rbuf = resp.read()
+        except (urllib.error.URLError, http.client.HTTPException, OSError) as e:
+            # FIXME: Is it good idea to convert all of those exceptions to
+            # HTTPClientException?
 
-        rbuf = resp.read() # FIXME: exc
+            raise HTTPClientException(e)
+
         self._rf = io.BytesIO(rbuf)
+
+class HTTPClientException(TransportException):
+    """Exception class for HTTP-related errors."""
+
+    def __init__(self, reason):
+        super().__init__(str(reason))
+
+        self._reason = reason
+
+    def get_reason(self):
+        return self._reason

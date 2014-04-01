@@ -1,3 +1,5 @@
+.. TODO: Sync with examples/gallery/www/index.html.
+
 Examples
 ========
 
@@ -10,8 +12,8 @@ Gallery
 Source code: https://github.com/bandipapa/MyRPC/tree/master/examples/gallery.
 
 This is an example demonstrating how you can use MyRPC to create a simple
-web/ajax-based picture gallery application. Try to upload an image and see
-what happens... :)
+web/ajax-based picture gallery application, with Python server and JavaScript
+client code. Try to upload an image and see what happens... :)
 
 Requirements:
 

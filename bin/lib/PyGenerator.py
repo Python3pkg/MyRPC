@@ -10,6 +10,7 @@ from myrpcgen.InternalException import InternalException
 _INIT_FILENAME = "__init__.py"
 _TYPES_MODULE = "Types"
 _TYPES_FILENAME = "{}.py".format(_TYPES_MODULE)
+_CLIENT_FILENAME = "Client.py"
 _PROCESSOR_FILENAME = "Processor.py"
 _ARGS_RESULT_SERI_SFA = StructFieldAccess.UNDERSCORE
 _STRUCT_READ = "{}read".format(MYRPC_PREFIX)
@@ -31,6 +32,7 @@ class PyGenerator(GeneratorBase):
         self._args_seri_classp = "{}args_seri".format(MYRPC_PREFIX)
         self._result_seri_classp = "{}result_seri".format(MYRPC_PREFIX)
         self._codec_dtype_classp = "myrpc.codec.CodecBase.DataType"
+        self._exc_handler_funcp = "{}exc_handler".format(U_MYRPC_PREFIX)
 
         self._setup_dtype_kinds()
 
@@ -79,7 +81,25 @@ class PyGenerator(GeneratorBase):
         self._close()
 
     def gen_client(self):
-        raise GeneratorException("Client generation is not supported yet")
+        self._open(_CLIENT_FILENAME)
+
+        self._whdr()
+
+        # Use Types. prefix to reference the types in Types module (to
+        # prevent IDL type conflict).
+
+        sb = StringBuilder()
+        sb.wl("from myrpc.Common import MessageHeaderException")
+        sb.wl("from myrpc.util.ClientSubr import ClientSubr")
+        sb.we()
+        sb.wl("from {} import {}".format(self._namespace, _TYPES_MODULE))
+        sb.we()
+        self._ws(sb.get_string())
+
+        self._gen_client()
+        self._gen_exc_handler()
+
+        self._close()
 
     def gen_processor(self):
         self._open(_PROCESSOR_FILENAME)
@@ -93,6 +113,7 @@ class PyGenerator(GeneratorBase):
         sb.wl("from abc import ABCMeta, abstractmethod")
         sb.we()
         sb.wl("from myrpc.util.ProcessorSubr import HandlerReturn, ProcessorSubr")
+        sb.we()
         sb.wl("from {} import {}".format(self._namespace, _TYPES_MODULE))
         sb.we()
         self._ws(sb.get_string())
@@ -140,6 +161,98 @@ class PyGenerator(GeneratorBase):
             s = self._dtype_kind_struct_gen(out_struct, result_seri_classn, _ARGS_RESULT_SERI_SFA)
             self._ws(s)
 
+    def _gen_client(self):
+        sb = StringBuilder()
+
+        sb.wl("class Client:")
+        sb.wl("\tdef __init__(self, tr, codec):")
+        sb.wl("\t\tself._client = ClientSubr(tr, codec)")
+        sb.we()
+
+        classn_prefix = "{}.".format(_TYPES_MODULE)
+
+        methods = self._sort_by_name(self._methods)
+
+        for method in methods:
+            name = method.get_name()
+            in_struct = method.get_in_struct()
+            args_seri_classn = self._get_args_seri_classn(name, classn_prefix)
+            result_seri_classn = self._get_result_seri_classn(name, classn_prefix)
+            exc_handler_funcn = self._get_exc_handler_funcn(name)
+
+            in_field_names = [field.get_name() for field in in_struct.get_fields()]
+            args = ["arg_{}".format(in_field_name) for in_field_name in in_field_names]
+
+            args_self = args.copy()
+            args_self.insert(0, "self")
+            args_selff = ", ".join(args_self)
+
+            sb.wl("\tdef {}({}):".format(name, args_selff))
+            sb.wl("\t\targs_seri = {}()".format(args_seri_classn))
+
+            for i in range(len(in_field_names)):
+                in_field_name = in_field_names[i]
+                arg = args[i]
+                setter_invoke = self._get_struct_field_setter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
+
+                sb.wl("\t\t{}".format(setter_invoke))
+
+            sb.we()
+
+            sb.wl("\t\tresult_seri = {}()".format(result_seri_classn))
+            sb.we()
+
+            sb.wl("\t\texc_handler = self.{}".format(exc_handler_funcn))
+            sb.we()
+
+            sb.wl("\t\tr = self._client.call(\"{}\", args_seri, result_seri, exc_handler)".format(name))
+            sb.we()
+
+            sb.wl("\t\treturn r")
+            sb.we()
+
+        self._ws(sb.get_string())
+
+    def _gen_exc_handler(self):
+        sb = StringBuilder()
+
+        classn_prefix = "{}.".format(_TYPES_MODULE)
+
+        methods = self._sort_by_name(self._methods)
+
+        for method in methods:
+            name = method.get_name()
+            excs = method.get_excs()
+            funcn = self._get_exc_handler_funcn(name)
+
+            sb.wl("\tdef {}(self, codec, name):".format(funcn))
+            sb.wl("\t\texcmap = {")
+
+            lasti = len(excs) - 1
+
+            for (i, exc) in enumerate(excs):
+                exc_name = exc.get_name()
+                exc_classn = self._get_dtype_classn(exc_name, classn_prefix)
+
+                sb.wl("\t\t\t\"{}\": {}{}".format(exc_name, exc_classn, "," if i < lasti else ""))
+
+            sb.wl("\t\t}")
+            sb.we()
+
+            sb.wl("\t\tif name not in excmap:")
+            sb.wl("\t\t\traise MessageHeaderException(\"Unknown exception name {}\".format(name))")
+            sb.we()
+
+            sb.wl("\t\texc_class = excmap[name]")
+            sb.wl("\t\texc = exc_class()")
+            sb.wl("\t\texc.{}(codec)".format(_STRUCT_READ))
+            sb.we()
+
+            sb.wl("\t\treturn exc")
+            sb.we()
+
+        self._ws(sb.get_string())
+
     def _gen_iface(self):
         sb = StringBuilder()
 
@@ -169,16 +282,16 @@ class PyGenerator(GeneratorBase):
     def _gen_processor(self):
         sb = StringBuilder()
 
-        classn_prefix = "{}.".format(_TYPES_MODULE)
-
-        methods = self._sort_by_name(self._methods)
-
         sb.wl("class Processor:")
         sb.wl("\tdef __init__(self, impl):")
         sb.wl("\t\tself._impl = impl")
         sb.we()
 
         sb.wl("\t\tmethodmap = {")
+
+        classn_prefix = "{}.".format(_TYPES_MODULE)
+
+        methods = self._sort_by_name(self._methods)
 
         lasti = len(methods) - 1
 
@@ -280,7 +393,7 @@ class PyGenerator(GeneratorBase):
             DataTypeKind.LIST:   ("LIST",   self._dtype_kind_list_gen,      self._dtype_kind_list_read,      self._dtype_kind_list_write),
             DataTypeKind.STRUCT: ("STRUCT", self._dtype_kind_struct_gen,    self._dtype_kind_struct_read,    self._dtype_kind_struct_write),
             # Exceptions are using the same methods as structs.
-            DataTypeKind.EXC:    (None,     self._dtype_kind_struct_gen,    self._dtype_kind_struct_read,    self._dtype_kind_struct_write)
+            DataTypeKind.EXC:    (None,     self._dtype_kind_struct_gen,    None,                            None)
         }
 
         self._register_dtype_kinds(dtype_kinds)
@@ -692,5 +805,10 @@ class PyGenerator(GeneratorBase):
         classn = "{}.{}".format(self._codec_dtype_classp, codec_dtype)
 
         return classn
+
+    def _get_exc_handler_funcn(self, name):
+        funcn = "{}_{}".format(self._exc_handler_funcp, name)
+
+        return funcn
 
 GeneratorBase.register_gen("py", PyGenerator)

@@ -36,10 +36,10 @@ myrpc.util.ClientSubr.prototype.call_continue = function()
 {
     var msg;
     var mtype;
-    var name;
+    var exc_name;
     var err_msg = null;
     var exc = null;
-    var r;
+    var r = null;
 
     // Re-throw delayed exceptions.
 
@@ -59,8 +59,8 @@ myrpc.util.ClientSubr.prototype.call_continue = function()
 	break;
 
     case myrpc.codec.MessageType.CALL_EXCEPTION:
-	name = msg.get_name();
-	exc = this._exc_handler(this._codec, name);
+	exc_name = msg.get_name();
+	exc = this._exc_handler(this._codec, exc_name);
 	break;
 
     case myrpc.codec.MessageType.ERROR:
@@ -85,11 +85,10 @@ myrpc.util.ClientSubr.prototype.call_continue = function()
     if (exc)
 	throw exc;
 
-    if ("get_result" in this._result_seri) {
+    if ("get_result" in this._result_seri)
 	r = this._result_seri.get_result();
 
-	return r;
-    }
+    return r;
 };
 
 myrpc.util.ClientSubr.prototype._call = function(name, args_seri, result_seri, exc_handler, oncontinue)

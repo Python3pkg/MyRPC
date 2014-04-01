@@ -1,5 +1,3 @@
-.. FIXME: Add client/processor API description per generator.
-
 .. _generators:
 
 Generator specific information
@@ -31,6 +29,9 @@ with the :option:`-d` :file:`{outdir}` option of myrpcgen:
 | :file:`{outdir}/TopPackage/SubPackage/Types.py`     | (De)serializers for: method arguments, return values and |
 |                                                     | for user-defined types. All the user-defined types will  |
 |                                                     | be in the *TopPackage.SubPackage.Types* module.          |
++-----------------------------------------------------+----------------------------------------------------------+
+| :file:`{outdir}/TopPackage/SubPackage/Client.py`    | Client stub implementation (*Client* class) in the       |
+|                                                     | *TopPackage.SubPackage.Client* module.                   |
 +-----------------------------------------------------+----------------------------------------------------------+
 | :file:`{outdir}/TopPackage/SubPackage/Processor.py` | Processor stub implementation (*Processor* class) and    |
 |                                                     | abstract interface (*Interface* class) in the            |

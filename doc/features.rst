@@ -1,10 +1,12 @@
+.. TODO: Keep feature list in-sync with setup.py.
+
 Features
 ========
 
 Short summary of MyRPC features:
 
 * No external dependencies.
-* Multi-platform capability.
+* Cross-platform capability.
 * IDL-based client and server stub generation.
 * Binary capable (no need for escaping of binary data).
 * Single roundtrip protocol, ideal for HTTP (but no limited to).
@@ -22,10 +24,12 @@ Target languages
 
 MyRPC supports the following target languages:
 
-+-------------+----------------+------------------------+----------------------------------------+
-| Language    | Generator name | Client stub generation | Processor (aka server) stub generation |
-+=============+================+========================+========================================+
-| Python >= 3 | py             | No                     | Yes                                    |
-+-------------+----------------+------------------------+----------------------------------------+
-| JavaScript  | js             | Yes                    | No                                     |
-+-------------+----------------+------------------------+----------------------------------------+
++---------------+----------------+------------------------+------------------+------------------------------------+---------------------+
+| Language      | Generator name | Client stub generation | Client stub mode | Processor stub generation [#proc]_ | Processor stub mode |
++===============+================+========================+==================+====================================+---------------------+
+| Python >= 3.3 | py             | Yes                    | Sync             | Yes                                | Sync                |
++---------------+----------------+------------------------+------------------+------------------------------------+---------------------+
+| JavaScript    | js             | Yes                    | Async            | No                                 |                     |
++---------------+----------------+------------------------+------------------+------------------------------------+---------------------+
+
+.. [#proc] Also known as server stub. In MyRPC terminology it is called processor stub.

@@ -192,32 +192,40 @@ class JSGenerator(GeneratorBase):
 
             sb.wl("{}.prototype.{} = function(codec, name)".format(self._client_classn, funcn))
             sb.wl("{")
+            sb.wl("\tvar excmap = {")
+
+            lasti = len(excs) - 1
+
+            for (i, exc) in enumerate(excs):
+                exc_name = exc.get_name()
+                exc_classn = self._get_dtype_classn(exc_name)
+
+                # Use MYRPC_PREFIX as prefix before exception names. It is
+                # needed because JavaScript objects contain built-in members
+                # (e.g. toString).
+
+                sb.wl("\t\t\"{}{}\": {}{}".format(MYRPC_PREFIX, exc_name, exc_classn, "," if i < lasti else ""))
+
+            sb.wl("\t};")
+            sb.wl("\tvar exc_name = \"{}\" + name;".format(MYRPC_PREFIX))
+            sb.wl("\tvar exc_class;")
             sb.wl("\tvar exc;")
             sb.we()
 
-            sb.wl("\tswitch (name) {")
+            sb.wl("\tif (!(exc_name in excmap))")
+            sb.wl("\t\tthrow new myrpc.common.MessageHeaderException(\"Unknown exception name \" + name);")
+            sb.we()
 
-            for exc in excs:
-                exc_name = exc.get_name()
-
-                sb.wl("\t\tcase \"{}\":".format(exc_name))
-
-                s = self._gtm.read_dtype(exc, "exc")
-                sb.wlsindent("\t\t\t", s)
-
-                sb.wl("\t\t\tbreak;")
-                sb.we()
-
-            sb.wl("\t\tdefault:")
-            sb.wl("\t\t\tthrow new myrpc.common.MessageHeaderException(\"Unknown exception name \" + name);")
-            sb.wl("\t}")
+            sb.wl("\texc_class = excmap[exc_name];")
+            sb.wl("\texc = new exc_class();")
+            sb.wl("\texc.{}(codec);".format(_STRUCT_READ))
             sb.we()
 
             sb.wl("\treturn exc;")
             sb.wl("};")
             sb.we()
 
-        self._ws(sb.get_string())    
+        self._ws(sb.get_string())
 
     def _setup_dtype_kinds(self):
         dtype_kinds = {
@@ -238,7 +246,7 @@ class JSGenerator(GeneratorBase):
             DataTypeKind.LIST:   ("LIST",   self._dtype_kind_list_gen,      self._dtype_kind_list_read,      self._dtype_kind_list_write),
             DataTypeKind.STRUCT: ("STRUCT", self._dtype_kind_struct_gen,    self._dtype_kind_struct_read,    self._dtype_kind_struct_write),
             # Exceptions are using the same methods as structs.
-            DataTypeKind.EXC:    (None,     self._dtype_kind_struct_gen,    self._dtype_kind_struct_read,    self._dtype_kind_struct_write)
+            DataTypeKind.EXC:    (None,     self._dtype_kind_struct_gen,    None,                            None)
         }
 
         self._register_dtype_kinds(dtype_kinds)

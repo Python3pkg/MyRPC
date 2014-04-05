@@ -18,13 +18,14 @@ class GeneratorBase(metaclass = ABCMeta):
 
     _generators = {}
 
-    def __init__(self, namespace, tm, methods, indent, sfa, outdir):
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir, overwrite):
         self._namespace = namespace
         self._tm = tm
         self._methods = methods
         self._indent = indent
         self._sfa = sfa
         self._outdir = outdir
+        self._filemode = "wt" if overwrite else "xt"
 
         self._gtm = GeneratorTypeManager()
         self._filename = None
@@ -92,7 +93,7 @@ class GeneratorBase(metaclass = ABCMeta):
             content = content[:-1]
 
         try:
-            f = open(self._filename, mode = "xt", encoding = ENCODING)
+            f = open(self._filename, mode = self._filemode, encoding = ENCODING)
             f.write(content)
             f.close()
         except OSError as e:

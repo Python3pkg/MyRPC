@@ -24,12 +24,14 @@ Target languages
 
 MyRPC supports the following target languages:
 
-+---------------+----------------+------------------------+------------+------------------------------------+---------------+
-| Language      | Generator name | Client stub generation | Client API | Processor stub generation [#proc]_ | Processor API |
-+===============+================+========================+============+====================================+===============+
-| Python >= 3.3 | py             | Yes                    | Sync       | Yes                                | Sync          |
-+---------------+----------------+------------------------+------------+------------------------------------+---------------+
-| JavaScript    | js             | Yes                    | Async      | No                                 |               |
-+---------------+----------------+------------------------+------------+------------------------------------+---------------+
++-------------------+----------------+------------------------+------------+------------------------------------+----------------------+
+| Language          | Generator name | Client stub generation | Client API | Processor stub generation [#proc]_ | Processor API [#lp]_ |
++===================+================+========================+============+====================================+======================+
+| Python >= 3.3     | py             | Yes                    | Sync       | Yes                                | Sync                 |
++-------------------+----------------+------------------------+------------+------------------------------------+----------------------+
+| JavaScript [#js]_ | js             | Yes                    | Async      | Yes                                | Sync                 |
++-------------------+----------------+------------------------+------------+------------------------------------+----------------------+
 
 .. [#proc] Also known as server stub. In MyRPC terminology it is called processor stub.
+.. [#lp] In case of HTTP, asynchronous processor API can be used to implement `long polling <http://en.wikipedia.org/wiki/Push_technology#Long_polling>`_.
+.. [#js] Node.js and browsers are both supported.

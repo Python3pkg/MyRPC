@@ -21,8 +21,8 @@ _NS_SEPARATOR = "."
 class PyGenerator(GeneratorBase):
     """Generator for Python."""
 
-    def __init__(self, namespace, tm, methods, indent, sfa, outdir):
-        super().__init__(namespace, tm, methods, indent, sfa, outdir)
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir, overwrite):
+        super().__init__(namespace, tm, methods, indent, sfa, outdir, overwrite)
 
         self._enum_read_funcp = "{}enum_read".format(MYRPC_PREFIX)
         self._enum_write_funcp = "{}enum_write".format(MYRPC_PREFIX)
@@ -54,7 +54,7 @@ class PyGenerator(GeneratorBase):
             if i > 0:
                 try:
                     filename = os.path.join(dirname, _INIT_FILENAME)
-                    f = open(filename, mode = "xt", encoding = ENCODING)
+                    f = open(filename, mode = self._filemode, encoding = ENCODING)
                     f.close()
                 except OSError as e:
                     raise GeneratorException(e)
@@ -316,6 +316,7 @@ class PyGenerator(GeneratorBase):
             in_struct = method.get_in_struct()
             excs = method.get_excs()
             has_result = method.has_result()
+            has_excs = len(excs) > 0
             result_seri_classn = self._get_result_seri_classn(name, classn_prefix)
 
             sb.wl("\tdef _handle_{}(self, args_seri):".format(name))
@@ -339,7 +340,7 @@ class PyGenerator(GeneratorBase):
 
             indent = "\t\t"
 
-            if len(excs) > 0:
+            if has_excs:
                 sb.wl("\t\ttry:")
                 indent += "\t"
 

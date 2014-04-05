@@ -55,7 +55,7 @@ def main():
 
     sfa = SFA_CHOICES[args.sfa_name]
 
-    gen = gen_class(namespace, tm, methods, args.indent, sfa, args.outdir)
+    gen = gen_class(namespace, tm, methods, args.indent, sfa, args.outdir, args.overwrite)
 
     try:
         gen.create_outdir()
@@ -90,6 +90,8 @@ def parse_args():
     parser.add_argument("-d", dest = "outdir", metavar = "outdir",
                         default = OUTDIR,
                         help = "output directory for generated files (default: {})".format(OUTDIR))
+    parser.add_argument("-o", dest = "overwrite", action = "store_true",
+                        help = "overwrite already existing files (default: no)")
     parser.add_argument("-g", dest = "gen_name", required = True,
                         metavar = "gen",
                         help = "generator to use (available: {})".format(gen_namesf))

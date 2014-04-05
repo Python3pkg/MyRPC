@@ -23,7 +23,10 @@ function refresh()
 	try {
 	    // This function is called when the RPC call is finished. According
 	    // to the IDL, list_image_info returns with a list of ImageInfo elements.
-	    // By calling client.myrpc_continue() we can retrieve this list.
+	    // By calling client.myrpc_continue(), we can mimic the behaviour of
+	    // an ordinary method call, since:
+	    //  - it will return with the ImageInfo list,
+            //  - or in case of error, it will throw exceptions.
 
 	    var l = client.myrpc_continue();
 

@@ -41,7 +41,7 @@ class ClientSubr:
         elif mtype == MessageType.CALL_EXCEPTION:
             exc_name = msg.get_name()
             exc = exc_handler(self._codec, exc_name)
-        elif mtype == myrpc.codec.MessageType.ERROR:
+        elif mtype == MessageType.ERROR:
             err_msg = msg.get_err_msg()
         else:
             raise MessageHeaderException("Unexpected message type {}".format(mtype))

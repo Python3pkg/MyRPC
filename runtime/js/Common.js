@@ -79,3 +79,17 @@ myrpc.common.abstract_class = function(obj, constructor)
     if (obj.constructor == constructor)
 	throw new myrpc.common.MyRPCInternalException("Can't instantiate abstract class");
 };
+
+// Calls to apply and call methods of functions are forbidden, except in
+// constructors. In all other cases a proxy function must be used.
+
+myrpc.common.proxy = function(func, ctx)
+{
+    var proxy = function() {
+	var r = func.apply(ctx, arguments);
+
+	return r;
+    };
+
+    return proxy;
+};

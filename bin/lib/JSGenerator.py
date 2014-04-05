@@ -1,12 +1,13 @@
 import re
 
-from myrpcgen.Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE
+from myrpcgen.Constants import MYRPC_PREFIX, U_MYRPC_PREFIX, IDENTIFIER_RE, RESULT_FIELD_NAME
 from myrpcgen.GeneratorBase import StructFieldAccess, GeneratorBase, StringBuilder, GeneratorException
 from myrpcgen.TypeManager import DataTypeKind
 from myrpcgen.InternalException import InternalException
 
 _TYPES_FILENAME = "Types.js"
 _CLIENT_FILENAME = "Client.js"
+_PROCESSOR_FILENAME = "Processor.js"
 _ONCONTINUE = "{}{}".format(MYRPC_PREFIX, "oncontinue")
 _CONTINUE = "{}{}".format(MYRPC_PREFIX, "continue")
 _ARGS_RESULT_SERI_SFA = StructFieldAccess.UNDERSCORE
@@ -18,8 +19,8 @@ _NS_SEPARATOR = "."
 class JSGenerator(GeneratorBase):
     """Generator for JavaScript."""
 
-    def __init__(self, namespace, tm, methods, indent, sfa, outdir):
-        super().__init__(namespace, tm, methods, indent, sfa, outdir)
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir, overwrite):
+        super().__init__(namespace, tm, methods, indent, sfa, outdir, overwrite)
 
         self._dtype_classp = "{}.Types".format(self._namespace)
         self._enum_read_funcp = "{}.{}enum_read".format(self._dtype_classp, MYRPC_PREFIX)
@@ -31,6 +32,7 @@ class JSGenerator(GeneratorBase):
         self._result_seri_classp = "{}.{}result_seri".format(self._dtype_classp, MYRPC_PREFIX)
         self._codec_dtype_classp = "myrpc.codec.DataType"
         self._client_classn = "{}.Client".format(self._namespace)
+        self._processor_classn = "{}.Processor".format(self._namespace)
         self._exc_handler_funcp = "{}exc_handler".format(U_MYRPC_PREFIX)
 
         self._setup_dtype_kinds()
@@ -76,7 +78,16 @@ class JSGenerator(GeneratorBase):
         self._close()
 
     def gen_processor(self):
-        raise GeneratorException("Processor generation is not supported yet")
+        self._open(_PROCESSOR_FILENAME)
+
+        self._whdr()
+
+        # We don't support abstract interface generation for JavaScript,
+        # because the language itself doesn't support it.
+
+        self._gen_processor()
+
+        self._close()
 
     @staticmethod
     def validate_ns(ns):
@@ -162,7 +173,7 @@ class JSGenerator(GeneratorBase):
             sb.wl("\tresult_seri = new {}();".format(result_seri_classn))
             sb.we()
 
-            sb.wl("\texc_handler = this.{};".format(exc_handler_funcn))
+            sb.wl("\texc_handler = myrpc.common.proxy(this.{}, this);".format(exc_handler_funcn))
             sb.we()
 
             sb.wl("\tthis._client.call(\"{}\", args_seri, result_seri, exc_handler, {}, this);".format(name, _ONCONTINUE))
@@ -222,6 +233,118 @@ class JSGenerator(GeneratorBase):
             sb.we()
 
             sb.wl("\treturn exc;")
+            sb.wl("};")
+            sb.we()
+
+        self._ws(sb.get_string())
+
+    def _gen_processor(self):
+        sb = StringBuilder()
+
+        sb.wl("{} = function(impl)".format(self._processor_classn))
+        sb.wl("{")
+        sb.wl("\tvar methodmap = {")
+
+        methods = self._sort_by_name(self._methods)
+
+        lasti = len(methods) - 1
+
+        for (i, method) in enumerate(methods):
+            name = method.get_name()
+            args_seri_classn = self._get_args_seri_classn(name)
+
+            # Use MYRPC_PREFIX as prefix before exception names. It is
+            # needed because JavaScript objects contain built-in members
+            # (e.g. toString).
+
+            sb.wl("\t\t\"{0}{1}\": [{2}, myrpc.common.proxy(this._handle_{1}, this)]{3}".format(MYRPC_PREFIX, name, args_seri_classn, "," if i < lasti else ""))
+
+        sb.wl("\t};")
+        sb.we()
+
+        sb.wl("\tthis._impl = impl;")
+        sb.wl("\tthis._proc = new myrpc.util.ProcessorSubr(methodmap);")
+        sb.wl("};")
+        sb.we()
+
+        sb.wl("{}.prototype.process_one = function(tr, codec)".format(self._processor_classn))
+        sb.wl("{")
+        sb.wl("\tthis._proc.process_one(tr, codec);")
+        sb.wl("};")
+        sb.we()
+
+        for method in methods:
+            name = method.get_name()
+            in_struct = method.get_in_struct()
+            excs = method.get_excs()
+            has_result = method.has_result()
+            has_excs = len(excs) > 0
+            result_seri_classn = self._get_result_seri_classn(name)
+
+            sb.wl("{}.prototype._handle_{} = function(args_seri)".format(self._processor_classn, name))
+            sb.wl("{")
+
+            in_field_names = [field.get_name() for field in in_struct.get_fields()]
+            args = ["arg_{}".format(in_field_name) for in_field_name in in_field_names]
+            argsf = ", ".join(args)
+
+            for i in range(len(in_field_names)):
+                in_field_name = in_field_names[i]
+                arg = "var {}".format(args[i]) # FIXME: var
+                getter_invoke = self._get_struct_field_getter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
+
+                sb.wl("\t{};".format(getter_invoke))
+
+            sb.wl("\tvar exc_name = null;")
+            sb.wl("\tvar exc;")
+            sb.wl("\tvar r;")
+            sb.wl("\tvar hr;")
+            sb.wl("\tvar result_seri;")
+            sb.we()
+
+            indent = "\t"
+
+            if has_excs:
+                sb.wl("\ttry {")
+                indent += "\t"
+
+            sb.wl("{}{}this._impl.{}({});".format(indent, "r = " if has_result else "", name, argsf))
+
+            if has_excs:
+                sb.wl("\t} catch (e) {")
+
+                for (i, exc) in enumerate(excs):
+                    exc_name = exc.get_name()
+                    exc_classn = self._get_dtype_classn(exc_name)
+
+                    sb.wl("\t\t{} (e instanceof {}) {{".format("} else if" if i > 0 else "if", exc_classn))
+                    sb.wl("\t\t\texc_name = \"{}\";".format(exc_name))
+                    sb.wl("\t\t\texc = e;")
+
+                sb.wl("\t\t} else {")
+                sb.wl("\t\t\tthrow e;")
+                sb.wl("\t\t}")
+                sb.wl("\t}")
+
+            sb.we()
+            sb.wl("\thr = new myrpc.util.HandlerReturn();")
+            sb.we()
+
+            sb.wl("\tif (exc_name != null) {")
+            sb.wl("\t\thr.set_exc(exc, exc_name);")
+            sb.wl("\t} else {")
+            sb.wl("\t\tresult_seri = new {}();".format(result_seri_classn))
+
+            if has_result:
+                setter_invoke = self._get_struct_field_setter_invoke("result_seri", RESULT_FIELD_NAME, "r", _ARGS_RESULT_SERI_SFA)
+                sb.wl("\t\t{};".format(setter_invoke))
+
+            sb.we()
+            sb.wl("\t\thr.set_result(result_seri);")
+            sb.wl("\t}")
+            sb.we()
+
+            sb.wl("\treturn hr;")
             sb.wl("};")
             sb.we()
 

@@ -287,14 +287,14 @@ myrpc.codec.BinaryCodec.prototype.write_ui32 = function(i)
 
 myrpc.codec.BinaryCodec.prototype.read_ui64 = function()
 {
-    var i = this._read_num("Q", this._read_ui64);
+    var i = this._read_num("Q", myrpc.common.proxy(this._read_ui64, this));
 
     return i;
 };
 
 myrpc.codec.BinaryCodec.prototype.write_ui64 = function(i)
 {
-    this._write_num("Q", i, this._write_ui64);
+    this._write_num("Q", i, myrpc.common.proxy(this._write_ui64, this));
 };
 
 myrpc.codec.BinaryCodec.prototype.read_i8 = function()
@@ -335,14 +335,14 @@ myrpc.codec.BinaryCodec.prototype.write_i32 = function(i)
 
 myrpc.codec.BinaryCodec.prototype.read_i64 = function()
 {
-    var i = this._read_num("q", this._read_i64);
+    var i = this._read_num("q", myrpc.common.proxy(this._read_i64, this));
 
     return i;
 };
 
 myrpc.codec.BinaryCodec.prototype.write_i64 = function(i)
 {
-    this._write_num("q", i, this._write_i64);
+    this._write_num("q", i, myrpc.common.proxy(this._write_i64, this));
 };
 
 myrpc.codec.BinaryCodec.prototype.read_float = function()
@@ -401,7 +401,7 @@ myrpc.codec.BinaryCodec.prototype._read_num = function(fmt, func)
     bbuf = this._tr.read(buflen);
     dbuf = new DataView(bbuf.buffer, bbuf.byteOffset, bbuf.length);
 
-    n = func ? func.call(this, dbuf) : dbuf[funcname](0, false);
+    n = func ? func(dbuf) : dbuf[funcname](0, false);
 
     return n;
 };
@@ -423,7 +423,7 @@ myrpc.codec.BinaryCodec.prototype._write_num = function(fmt, n, func)
     bbuf = new Uint8Array(abuf);
 
     if (func)
-	func.call(this, dbuf, n);
+	func(dbuf, n);
     else
 	dbuf[funcname](0, n, false);
 

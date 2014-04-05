@@ -117,15 +117,17 @@ If we have the following in IDL::
 then the following files will be created in the directory specified
 with the :option:`-d` :file:`{outdir}` option of myrpcgen:
 
-+----------------------------+-----------------------------------------------------------+
-| File                       | Description                                               |
-+============================+===========================================================+
-| :file:`{outdir}/Types.js`  | (De)serializers for: method arguments, return values and  |
-|                            | for user-defined types. All the user-defined types will   |
-|                            | be in the *TopNS.SubNS.Types* namespace.                  |
-+----------------------------+-----------------------------------------------------------+
-| :file:`{outdir}/Client.js` | Client stub implementation in *TopNS.SubNS.Client* class. |
-+----------------------------+-----------------------------------------------------------+
++-------------------------------+-----------------------------------------------------------------+
+| File                          | Description                                                     |
++===============================+=================================================================+
+| :file:`{outdir}/Types.js`     | (De)serializers for: method arguments, return values and        |
+|                               | for user-defined types. All the user-defined types will         |
+|                               | be in the *TopNS.SubNS.Types* namespace.                        |
++-------------------------------+-----------------------------------------------------------------+
+| :file:`{outdir}/Client.js`    | Client stub implementation in *TopNS.SubNS.Client* class.       |
++-------------------------------+-----------------------------------------------------------------+
+| :file:`{outdir}/Processor.js` | Processor stub implementation in *TopNS.SubNS.Processor* class. |
++-------------------------------+-----------------------------------------------------------------+
 
 64 bit unsigned and signed integers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

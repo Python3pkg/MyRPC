@@ -13,8 +13,8 @@ class HTTPClientTransport(TransportBase):
         super().__init__()
 
         self._url = url
-        self._timeout = None
         self._opener = None
+        self._timeout = None
 
     def set_state(self, state):
         if state == TransportState.WRITE_BEGIN:

@@ -32,6 +32,7 @@ WWW_FILES = (# Main page:
              "myrpc/CodecBase.js",
              "myrpc/BinaryCodec.js",
              "myrpc/ClientSubr.js",
+             "myrpc/BufferIO.js",
              # Generated stuff:
              "gen/Types.js",
              "gen/Client.js",

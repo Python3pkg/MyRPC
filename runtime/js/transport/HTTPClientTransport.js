@@ -1,3 +1,5 @@
+// FIXME: HTTPClientTransport is not yet supported under Node.js.
+
 myrpc.transport.HTTPClientTransport = function(url)
 {
     myrpc.transport.TransportBase.call(this);
@@ -10,9 +12,6 @@ myrpc.transport.HTTPClientTransport = function(url)
 
 myrpc.transport.HTTPClientTransport.prototype = Object.create(myrpc.transport.TransportBase.prototype);
 myrpc.transport.HTTPClientTransport.prototype.constructor = myrpc.transport.HTTPClientTransport;
-
-// HTTP write buffer size (must be power of 2).
-myrpc.transport.HTTPClientTransport._CHUNKSIZE = 1024;
 
 myrpc.transport.HTTPClientTransport.prototype.set_state = function(state)
 {
@@ -33,33 +32,17 @@ myrpc.transport.HTTPClientTransport.prototype.set_state = function(state)
 
 myrpc.transport.HTTPClientTransport.prototype.read = function(count)
 {
-    var pos = this._rbufpos + count;
-    var buf;
+    var buf = this._rbio.read(count);
 
-    if (pos > this._rbuf.length)
-	throw new myrpc.common.MessageTruncatedException()
-
-    buf = this._rbuf.subarray(this._rbufpos, pos);
-    this._rbufpos = pos;
+    if (count > buf.length)
+	throw new myrpc.common.MessageTruncatedException();
 
     return buf;
 };
 
 myrpc.transport.HTTPClientTransport.prototype.write = function(buf)
 {
-    var pos = this._wbufpos + buf.length;
-    var wbuf;
-
-    // Resize write buffer if neccessary.
-
-    if (pos > this._wbuf.length) {
-	wbuf = new Uint8Array(this._align(pos));
-	wbuf.set(this._wbuf);
-	this._wbuf = wbuf;
-    }
-
-    this._wbuf.set(buf, this._wbufpos);
-    this._wbufpos = pos;
+    this._wbio.write(buf);
 };
 
 myrpc.transport.HTTPClientTransport.prototype.set_oncontinue = function(oncontinue)
@@ -81,16 +64,13 @@ myrpc.transport.HTTPClientTransport.prototype._reset = function()
 	this._xhr = null;
     }
 
-    this._rbuf = null;
-    this._rbufpos = 0;
-
-    this._wbuf = new Uint8Array(0);
-    this._wbufpos = 0;
+    this._rbio = null;
+    this._wbio = new myrpc.util.BufferIO();
 };
 
 myrpc.transport.HTTPClientTransport.prototype._flush = function()
 {
-    var buf = this._wbuf.subarray(0, this._wbufpos);
+    var wbuf = this._wbio.get_buffer();
     var that = this;
 
     if (!this._oncontinue)
@@ -101,10 +81,14 @@ myrpc.transport.HTTPClientTransport.prototype._flush = function()
     this._xhr.setRequestHeader("Content-Type", "application/octet-stream");
     this._xhr.responseType = "arraybuffer";
     this._xhr.onreadystatechange = function() {
+	var rbuf;
+
 	if (that._xhr.readyState == 4) {
 	    that._status = that._xhr.status;
-	    if (that._is_status_ok())
-		that._rbuf = new Uint8Array(that._xhr.response);
+	    if (that._is_status_ok()) {
+		rbuf = new Uint8Array(that._xhr.response);
+		that._rbio = new myrpc.util.BufferIO(rbuf);
+	    }
 
 	    // Do not abort already completed request (see _reset).
 	    that._xhr = null;
@@ -114,21 +98,13 @@ myrpc.transport.HTTPClientTransport.prototype._flush = function()
     };
     if (this._timeout != null)
 	this._xhr.timeout = this._timeout;
-    this._xhr.send(buf);
+    this._xhr.send(wbuf);
 };
 
 myrpc.transport.HTTPClientTransport.prototype._check_status = function()
 {
     if (!this._is_status_ok())
 	throw new myrpc.transport.TransportException("HTTP request failed with status code " + this._status);
-};
-
-myrpc.transport.HTTPClientTransport.prototype._align = function(size)
-{
-    var mask = myrpc.transport.HTTPClientTransport._CHUNKSIZE - 1;
-    var asize = (size + mask) & ~mask;
-
-    return asize;
 };
 
 myrpc.transport.HTTPClientTransport.prototype._is_status_ok = function()

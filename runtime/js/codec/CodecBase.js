@@ -1,3 +1,6 @@
+// MODULE_DEP ../Common
+// MODULE_EXPORT
+
 myrpc.codec.FID_STOP = 0xffff;
 
 myrpc.codec.MessageType = {

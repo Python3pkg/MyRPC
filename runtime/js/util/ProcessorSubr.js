@@ -1,3 +1,8 @@
+// MODULE_DEP ../Common
+// MODULE_DEP ../transport/TransportBase
+// MODULE_DEP ../codec/CodecBase
+// MODULE_EXPORT
+
 myrpc.util.HandlerReturn = function()
 {
     this._finished = true;

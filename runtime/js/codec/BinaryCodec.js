@@ -1,3 +1,7 @@
+// MODULE_DEP ../Common
+// MODULE_DEP ./CodecBase
+// MODULE_EXPORT
+
 myrpc.codec.BinaryCodec = function()
 {
     myrpc.codec.CodecBase.call(this);

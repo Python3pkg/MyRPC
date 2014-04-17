@@ -1,3 +1,6 @@
+// MODULE_DEP ../Common
+// MODULE_EXPORT
+
 // In transport implementation classes Uint8Array is used to provide
 // binary data type.
 

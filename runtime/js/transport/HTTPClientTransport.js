@@ -1,3 +1,8 @@
+// MODULE_DEP ../Common
+// MODULE_DEP ./TransportBase
+// MODULE_DEP ../util/BufferIO
+// MODULE_EXPORT
+
 // FIXME: HTTPClientTransport is not yet supported under Node.js.
 
 myrpc.transport.HTTPClientTransport = function(url)

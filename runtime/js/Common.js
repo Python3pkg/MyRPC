@@ -6,6 +6,8 @@ myrpc = {common:    {},
 	 codec:     {},
 	 util:      {}};
 
+// MODULE_EXPORT
+
 myrpc.common.MyRPCException = function(msg)
 {
     this._msg = msg;

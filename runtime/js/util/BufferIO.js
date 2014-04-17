@@ -1,3 +1,6 @@
+// MODULE_DEP ../Common
+// MODULE_EXPORT
+
 myrpc.util.BufferIO = function(buf)
 {
     // This class implements a memory-based buffer which has

@@ -1,3 +1,8 @@
+// MODULE_DEP ../Common
+// MODULE_DEP ./TransportBase
+// MODULE_DEP ../util/BufferIO
+// MODULE_EXPORT
+
 // FIXME: set_oncontinue present in interface (not needed).
 
 myrpc.transport.MemoryTransport = function(buf)

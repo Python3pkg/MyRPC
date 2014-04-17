@@ -5,7 +5,7 @@
 namespace js GalleryService
 namespace py GalleryService
 
-# list_image_info method: list info about uploaded images.
+# list_image_info: list info about uploaded images.
 #
 # Input argument:
 #  - skip_imgid (optional): if present, then only ImageInfos with imgid
@@ -27,7 +27,7 @@ beginmethod list_image_info
     out required ImageInfoList
 endmethod
 
-# upload_image method: upload an image.
+# upload_image: upload an image.
 #
 # Input argument:
 #  - imgbuf: binary image data.

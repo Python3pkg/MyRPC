@@ -23,21 +23,6 @@ from GalleryService.Types import ImageInfo, UnknownFormat, SizeTooLarge
 
 INDEX = "index.html"
 WWW_DIR = "www"
-WWW_FILES = (# Main page:
-             INDEX,
-             # MyRPC runtime libraries:
-             "myrpc/Common.js",
-             "myrpc/TransportBase.js",
-             "myrpc/HTTPClientTransport.js",
-             "myrpc/CodecBase.js",
-             "myrpc/BinaryCodec.js",
-             "myrpc/ClientSubr.js",
-             "myrpc/BufferIO.js",
-             # Generated stuff:
-             "gen/Types.js",
-             "gen/Client.js",
-             # Application specific:
-             "gallery.js")
 ENCODING = "utf-8"
 CONTENT_TYPE = "Content-Type"
 MAX_WIDTH = 1024
@@ -189,19 +174,37 @@ def handle_image(environ, start_response, imgid_str, show_normal):
 def handle_static(environ, start_response, path_info):
     """Handle static files."""
 
-    filename = get_static_filename(path_info)
-    if filename == None:
+    # If the url contains "..", then refuse to serve static files.
+
+    if path_info.find("..") != -1:
         raise ResourceNotFound()
+
+    if path_info == "/":
+        filename = INDEX
+    else:
+        filename = path_info[1:]
 
     fullname = os.path.join(WWW_DIR, filename)
 
+    # Serve only regular files.
+
+    if not os.path.isfile(fullname):
+        raise ResourceNotFound()
+
+    f = None
+
+    try:
+        f = open(fullname, mode = "rb")
+        buf = f.read()
+    except OSError:
+        raise ResourceNotFound()
+    finally:
+        if f:
+            f.close()
+
+    # TODO: Add utf-8 encoding header for text files.
+
     (mimetype, encoding) = mimetypes.guess_type(filename)
-
-    f = open(fullname, mode = "rb")
-    buf = f.read()
-    f.close()
-
-    # FIXME: Add utf-8 encoding header for text files.
 
     status = "{} OK".format(http.client.OK)
     headers = [(CONTENT_TYPE, mimetype)]
@@ -221,18 +224,6 @@ def handle_notfound(environ, start_response):
     body = "<html><head><title>Not Found</title></head><body>The requested resource is not found.</body></html>"
 
     return [body.encode(ENCODING)]
-
-def get_static_filename(path_info):
-    filename = None
-
-    if path_info == "/":
-        filename = INDEX
-    else:
-        path_info_stripped = path_info[1:]
-        if path_info_stripped in WWW_FILES:
-            filename = path_info_stripped
-
-    return filename
 
 def process_request(environ, start_response):
     """Process one HTTP request."""
@@ -258,7 +249,7 @@ def process_request(environ, start_response):
         else:
             r = handle_static(environ, start_response, path_info)
 
-    # FIXME: Return method not allowed.
+    # TODO: Return method not allowed.
 
     if r == None:
         raise ResourceNotFound()
@@ -276,7 +267,7 @@ def app(environ, start_response):
     return r
 
 # Parse port argument.
-# FIXME: Check for 0-65535.
+# TODO: Check for 0-65535.
 
 if len(sys.argv) != 2:
     print("{}: port should be specified".format(sys.argv[0]), file = sys.stderr)

@@ -1,5 +1,3 @@
-.. TODO: Sync with examples/gallery/www/index.html.
-
 Examples
 ========
 
@@ -10,6 +8,8 @@ Gallery
 -------
 
 Source code: https://github.com/bandipapa/MyRPC/tree/master/examples/gallery.
+
+.. TODO: Sync with examples/gallery/www/index.html.
 
 This is an example demonstrating how you can use MyRPC to create a simple
 web/ajax-based picture gallery application, with Python server and JavaScript
@@ -60,3 +60,31 @@ Source code files:
 | :file:`www/myrpc/*.js`      | MyRPC JavaScript runtime libraries (these are just         |
 |                             | symlinks).                                                 |
 +-----------------------------+------------------------------------------------------------+
+
+Chat
+----
+
+Source code: https://github.com/bandipapa/MyRPC/tree/master/examples/chat.
+
+.. TODO: Sync with examples/chat/www/index.html.
+
+This is an example demonstrating how you can use MyRPC to create a simple
+real-time web application in pure JavaScript (browser-side and Node.js server)
+based on asynchronous MyRPC processor API.
+
+To compile MyRPC IDL files:
+
+.. code-block:: sh
+
+   cd examples/chat
+   make
+
+To start the demo:
+
+.. code-block:: sh
+
+   node chatserver.js 8080
+
+where *8080* is a portnumber, feel free to use any other.
+
+Then point your browser at http://yourip:8080, and start chatting.

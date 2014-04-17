@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MyRPC: Chat demo to test long polling</title>
+
+    <script src="myrpc/Common.js"></script>
+    <script src="myrpc/TransportBase.js"></script>
+    <script src="myrpc/HTTPClientTransport.js"></script>
+    <script src="myrpc/CodecBase.js"></script>
+    <script src="myrpc/BinaryCodec.js"></script>
+    <script src="myrpc/ClientSubr.js"></script>
+    <script src="myrpc/BufferIO.js"></script>
+    <script src="gen/Types.js"></script>
+    <script src="gen/Client.js"></script>
+    <script src="chat.js"></script>
+
+    <style>
+      #messageselem {
+        overflow-y: scroll;
+        height: 20em;
+        border-width: 1px;
+        border-style: solid;
+        border-color: black;
+      }
+
+      .inputbox {
+        margin-top: 3px;
+        border-width: 1px;
+        border-style: solid;
+        border-color: black;
+      }
+
+      .username {
+        color: blue;
+      }
+    </style>
+  </head>
+
+  <body onload="init()">
+    <h1>MyRPC: Chat demo to test long polling</h1>
+    <p>
+      This is an example demonstrating how you can use MyRPC to create a simple
+      real-time web application in pure JavaScript (browser-side and Node.js server)
+      based on asynchronous MyRPC processor API. Open this webpage in two or more
+      browser windows and send some messages to see it in action.
+    </p>
+
+    <p>
+      You can access the source <a href="https://github.com/bandipapa/MyRPC/tree/master/examples/chat">here</a>.
+    </p>
+
+    <div id="messageselem">
+    </div>
+
+    <div class="inputbox">
+      <input type="text" placeholder="Username" size="16" id="usernameelem"/>
+      <input type="text" placeholder="Message" size="100" id="textelem"/>
+      <input type="button" value="Send" onclick="send()" id="sendelem"/>
+    </div>
+  </body>
+</html>

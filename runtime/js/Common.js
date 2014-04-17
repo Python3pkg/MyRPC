@@ -26,6 +26,14 @@ myrpc.common.MyRPCInternalException.prototype.get_msg = function()
     return this._msg;
 };
 
+myrpc.common.IllegalArgumentException = function(msg)
+{
+    myrpc.common.MyRPCException.call(this, msg);
+};
+
+myrpc.common.IllegalArgumentException.prototype = Object.create(myrpc.common.MyRPCException.prototype);
+myrpc.common.IllegalArgumentException.prototype.constructor = myrpc.common.IllegalArgumentException;
+
 myrpc.common.MessageEncodeException = function(msg)
 {
     myrpc.common.MyRPCException.call(this, msg);

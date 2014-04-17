@@ -60,7 +60,7 @@ Short summary of MyRPC features:
       url = "https://github.com/bandipapa/MyRPC",
       platforms = "cross-platform",
       license = "BSD",
-      keywords = "rpc, Python, JavaScript, cross-platform, framework",
+      keywords = "rpc, Python, JavaScript, Node.js, cross-platform, framework",
       classifiers = ("Development Status :: 4 - Beta",
                      "Intended Audience :: Developers",
                      "License :: OSI Approved :: BSD License",

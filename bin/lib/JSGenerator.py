@@ -269,7 +269,16 @@ class JSGenerator(GeneratorBase):
 
         sb.wl("{}.prototype.process_one = function(tr, codec)".format(self._processor_classn))
         sb.wl("{")
-        sb.wl("\tthis._proc.process_one(tr, codec);")
+        sb.wl("\tvar finished = this._proc.process_one(tr, codec);")
+        sb.we()
+        sb.wl("\treturn finished;");
+        sb.wl("};")
+        sb.we()
+        sb.wl("{}.prototype.call_continue = function(func, user_data)".format(self._processor_classn))
+        sb.wl("{")
+        sb.wl("\tvar finished = this._proc.call_continue(func, user_data);")
+        sb.we()
+        sb.wl("\treturn finished;");
         sb.wl("};")
         sb.we()
 
@@ -281,26 +290,35 @@ class JSGenerator(GeneratorBase):
             has_excs = len(excs) > 0
             result_seri_classn = self._get_result_seri_classn(name)
 
-            sb.wl("{}.prototype._handle_{} = function(args_seri)".format(self._processor_classn, name))
+            sb.wl("{}.prototype._handle_{} = function(args_seri, func, user_data)".format(self._processor_classn, name))
             sb.wl("{")
 
             in_field_names = [field.get_name() for field in in_struct.get_fields()]
             args = ["arg_{}".format(in_field_name) for in_field_name in in_field_names]
             argsf = ", ".join(args)
 
-            for i in range(len(in_field_names)):
-                in_field_name = in_field_names[i]
-                arg = "var {}".format(args[i]) # FIXME: var
-                getter_invoke = self._get_struct_field_getter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
-
-                sb.wl("\t{};".format(getter_invoke))
+            for arg in args:
+                sb.wl("\tvar {};".format(arg))
 
             sb.wl("\tvar exc_name = null;")
             sb.wl("\tvar exc;")
-            sb.wl("\tvar r;")
+            sb.wl("\tvar r = null;")
             sb.wl("\tvar hr;")
             sb.wl("\tvar result_seri;")
             sb.we()
+
+            if len(args) > 0:
+                sb.wl("\tif (args_seri) {")
+
+                for i in range(len(in_field_names)):
+                    in_field_name = in_field_names[i]
+                    arg = "{}".format(args[i])
+                    getter_invoke = self._get_struct_field_getter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
+
+                    sb.wl("\t\t{};".format(getter_invoke))
+
+                sb.wl("\t}")
+                sb.we()
 
             indent = "\t"
 
@@ -308,7 +326,13 @@ class JSGenerator(GeneratorBase):
                 sb.wl("\ttry {")
                 indent += "\t"
 
-            sb.wl("{}{}this._impl.{}({});".format(indent, "r = " if has_result else "", name, argsf))
+            # Always check method return value, even if it is declared as void.
+            # If the method would like to do asynchronous execution, then
+            # we have to check for ProcessorNotFinished return value.
+            # Since we are in a try block, be sure that only the called functions
+            # (this._impl.method, func) can throw exceptions.
+
+            sb.wl("{}r = args_seri ? this._impl.{}({}) : func(user_data);".format(indent, name, argsf))
 
             if has_excs:
                 sb.wl("\t} catch (e) {")
@@ -330,7 +354,9 @@ class JSGenerator(GeneratorBase):
             sb.wl("\thr = new myrpc.util.HandlerReturn();")
             sb.we()
 
-            sb.wl("\tif (exc_name != null) {")
+            sb.wl("\tif (r instanceof myrpc.util.ProcessorNotFinishedClass) {")
+            sb.wl("\t\thr.set_notfinished();")
+            sb.wl("\t} else if (exc_name != null) {")
             sb.wl("\t\thr.set_exc(exc, exc_name);")
             sb.wl("\t} else {")
             sb.wl("\t\tresult_seri = new {}();".format(result_seri_classn))

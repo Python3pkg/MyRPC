@@ -85,6 +85,12 @@ myrpc.transport.HTTPClientTransport.prototype._flush = function()
 
 	if (that._xhr.readyState == 4) {
 	    that._status = that._xhr.status;
+
+	    // FIXME: On Safari, if the server closes connection without sending response,
+	    // xhr.status == 200 and xhr.response == null. In this case, force status to 0.
+	    if (that._xhr.response == null)
+		that._status = 0;
+
 	    if (that._is_status_ok()) {
 		rbuf = new Uint8Array(that._xhr.response);
 		that._rbio = new myrpc.util.BufferIO(rbuf);

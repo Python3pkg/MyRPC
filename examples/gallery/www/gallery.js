@@ -61,13 +61,13 @@ function refresh()
 	    if (e instanceof myrpc.common.ServerErrorException) {
 		var msg = e.get_msg();
 
-		alert("Server reply: " + msg);
+		alert("Server error reply: " + msg);
 	    } else if (e instanceof myrpc.common.MyRPCException) {
 		var msg = e.get_msg();
 
 		alert("MyRPC client error: " + msg);
 	    } else {
-		// Can't handle exception, throw it further.
+		// Can't handle exception, propagate it further.
 
 		throw e;
 	    }
@@ -117,13 +117,13 @@ function upload()
 		} else if (e instanceof myrpc.common.ServerErrorException) {
 		    var msg = e.get_msg();
 
-		    alert("Server reply: " + msg);
+		    alert("Server error reply: " + msg);
 		} else if (e instanceof myrpc.common.MyRPCException) {
 		    var msg = e.get_msg();
 
 		    alert("MyRPC client error: " + msg);
 		} else {
-		    // Can't handle exception, throw it further.
+		    // Can't handle exception, propagate it further.
 
 		    throw e;
 		}

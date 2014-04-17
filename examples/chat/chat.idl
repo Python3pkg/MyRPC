@@ -1,0 +1,29 @@
+# IDL description for ChatService.
+
+namespace js ChatService
+
+beginstruct Message
+    field 0 required ui32 messageid
+    field 1 required string username
+    field 2 required string text
+endstruct
+
+list MessageList Message
+
+beginexception UnknownMessageId
+endexception
+
+# list_messages: list received messages.
+
+beginmethod list_messages
+    in 0 optional ui32 skip_messageid
+    out required MessageList
+    throw UnknownMessageId
+endmethod
+
+# send_message: send a message.
+
+beginmethod send_message
+    in 0 required string username
+    in 1 required string text
+endmethod

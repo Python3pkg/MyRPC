@@ -1,1 +1,1 @@
-../../../../runtime/js/util/BufferIO.js
+../../../../runtime/js/src/util/BufferIO.js

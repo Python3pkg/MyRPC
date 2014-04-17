@@ -1,1 +1,1 @@
-../../../../runtime/js/codec/CodecBase.js
+../../../../runtime/js/src/codec/CodecBase.js

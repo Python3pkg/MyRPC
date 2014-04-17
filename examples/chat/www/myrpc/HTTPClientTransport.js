@@ -1,1 +1,1 @@
-../../../../runtime/js/transport/HTTPClientTransport.js
+../../../../runtime/js/src/transport/HTTPClientTransport.js

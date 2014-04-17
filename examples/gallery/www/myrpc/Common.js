@@ -1,1 +1,1 @@
-../../../../runtime/js/Common.js
+../../../../runtime/js/src/Common.js

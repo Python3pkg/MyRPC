@@ -1,1 +1,1 @@
-../../../../runtime/js/codec/BinaryCodec.js
+../../../../runtime/js/src/codec/BinaryCodec.js

@@ -1,0 +1,26 @@
+{
+    "name": "myrpc-runtime",
+    "version": "0.0.3-dev",
+    "description": "MyRPC JavaScript runtime for Node.js",
+    "keywords": [
+	"rpc",
+	"Python",
+	"JavaScript",
+	"Node.js",
+	"cross-platform",
+	"framework"
+    ],
+    "author": {
+	"name": "Szalai András",
+	"email": "andrew@bandipapa.com"
+    },
+    "license": "BSD-2-Clause",
+    "main": "./lib/Common",
+    "repository": {
+	"type": "git",
+	"url": "https://github.com/bandipapa/MyRPC"
+    },
+    "bugs": {
+	"url": "https://github.com/bandipapa/MyRPC/issues"
+    }
+}

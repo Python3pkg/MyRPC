@@ -9,13 +9,11 @@ var includeInThisContext = function(path) {
     var code = fs.readFileSync(path);
     vm.runInThisContext(code, path);
 }.bind(this);
-includeInThisContext("./../../runtime/js/Common.js");
-includeInThisContext("./../../runtime/js/transport/TransportBase.js");
-includeInThisContext("./../../runtime/js/transport/MemoryTransport.js");
-includeInThisContext("./../../runtime/js/codec/CodecBase.js");
-includeInThisContext("./../../runtime/js/codec/BinaryCodec.js");
-includeInThisContext("./../../runtime/js/util/ProcessorSubr.js");
-includeInThisContext("./../../runtime/js/util/BufferIO.js");
+var myrpc = require("myrpc-runtime");
+require("myrpc-runtime/lib/transport/MemoryTransport");
+require("myrpc-runtime/lib/codec/BinaryCodec");
+require("myrpc-runtime/lib/util/ProcessorSubr"); // FIXME: not needed
+global.myrpc = myrpc;
 includeInThisContext("./gen/Types.js");
 includeInThisContext("./gen/Processor.js");
 

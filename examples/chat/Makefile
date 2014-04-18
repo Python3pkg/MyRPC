@@ -1,10 +1,12 @@
 IDL=chat.idl
 NODE_OUTDIR=gen
 BROWSER_OUTDIR=www/gen
+NODE_MODULES=node_modules
 
 all:
 	myrpcgen -o -d $(NODE_OUTDIR) -g js -P $(IDL)
 	myrpcgen -o -d $(BROWSER_OUTDIR) -g js -C $(IDL)
+	npm install ../../runtime/js/dist/node
 
 clean:
-	rm -rf $(NODE_OUTDIR) $(BROWSER_OUTDIR)
+	rm -rf $(NODE_OUTDIR) $(BROWSER_OUTDIR) $(NODE_MODULES)

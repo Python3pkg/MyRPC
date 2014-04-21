@@ -1,22 +1,5 @@
 // MyRPC: Chat demo to test long polling.
 
-// FIXME: fix loading...
-ChatService = {};
-window = {};
-var fs = require('fs');
-var vm = require('vm');
-var includeInThisContext = function(path) {
-    var code = fs.readFileSync(path);
-    vm.runInThisContext(code, path);
-}.bind(this);
-var myrpc = require("myrpc-runtime");
-require("myrpc-runtime/lib/transport/MemoryTransport");
-require("myrpc-runtime/lib/codec/BinaryCodec");
-require("myrpc-runtime/lib/util/ProcessorSubr"); // FIXME: not needed
-global.myrpc = myrpc;
-includeInThisContext("./gen/Types.js");
-includeInThisContext("./gen/Processor.js");
-
 var INDEX = "index.html";
 var WWW_DIR = "www";
 var CONTENT_TYPE = "Content-Type";
@@ -29,6 +12,17 @@ var MESSAGEBUFFER_WAITER_TIMEOUT = (60 * 1000);
 var http = require("http");
 var path = require("path");
 var fs = require("fs");
+
+// Import MyRPC infrastructure.
+
+var myrpc = require("myrpc-runtime");
+require("myrpc-runtime/lib/transport/MemoryTransport");
+require("myrpc-runtime/lib/codec/BinaryCodec");
+
+// Import generated Processor and Types.
+
+var ChatService = require("ChatService/Types");
+require("ChatService/Processor");
 
 // WaiterInfo stores waiter callback and wait-until timestamp
 // (used for timeout long-waiting clients, which forces clients to

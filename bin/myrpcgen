@@ -48,16 +48,20 @@ def main():
 
     # Generate sources.
 
-    try:
-        namespace = namespaces[gen_name]
-    except KeyError:
-        fatal("Namespace for {} is not defined".format(gen_name))
-
+    namespace = namespaces[gen_name] if (gen_name in namespaces) else None
     sfa = SFA_CHOICES[args.sfa_name]
 
-    gen = gen_class(namespace, tm, methods, args.indent, sfa, args.outdir, args.overwrite)
+    # args is passed to generator to allow processing of custom
+    # command-line arguments (see GeneratorBase.setup_argparse).
+
+    gen = gen_class(namespace, tm, methods, args.indent, sfa, args.outdir, args.overwrite, args)
 
     try:
+        gen.setup_gen()
+
+        # IDL-syntax and command-line arguments must be validated before
+        # reaching this point.
+
         gen.create_outdir()
 
         gen.gen_types()
@@ -75,9 +79,13 @@ def main():
 def parse_args():
     # FIXME: argparser, common exit, exitcode
 
-    gen_namesf = ", ".join(GeneratorBase.list_gen())
+    gen_names = GeneratorBase.list_gen()
+    gen_namesf = ", ".join(gen_names)
 
     parser = argparse.ArgumentParser(description = "Compile MyRPC IDL to the specified language.")
+
+    # Add generic arguments.
+
     parser.add_argument("-v", action = "version", version = VERSION)
     parser.add_argument("-t", dest = "indent",
                         metavar = "indent",
@@ -100,6 +108,16 @@ def parse_args():
     parser.add_argument("-P", dest = "processor", action = "store_true",
                         help = "generate processor")
     parser.add_argument("idlfile")
+
+    # Add generator specific arguments. Generators must call add_argument_group to
+    # create a new arg group, and every arg must be prefixed with generator
+    # name.
+
+    for gen_name in gen_names:
+        gen_class = GeneratorBase.lookup_gen(gen_name)
+        gen_class.setup_argparse(parser)
+
+    # Parse command-line arguments.
 
     args = parser.parse_args()
 

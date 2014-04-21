@@ -99,7 +99,7 @@ class Parser:
 
     def _main_namespace(self):
         gen_name = self._tok.get_gen_name()
-        namespace = self._tok.get_ns(gen_name)
+        namespace = self._tok.get_ns()
 
         if gen_name in self._namespaces:
             raise ParserInternalException("Namespace for {} is already defined".format(gen_name))
@@ -345,14 +345,10 @@ class Tokenizer:
 
         return tok
 
-    def get_ns(self, gen_name):
+    def get_ns(self):
         tok = self._get_tok()
-        gen_class = GeneratorBase.lookup_gen(gen_name)
 
-        try:
-            gen_class.validate_ns(tok)
-        except ValueError:
-            raise ParserInternalException("{} is an invalid namespace for {}".format(tok, gen_name))
+        # Namespace check will take place later, during generator initialization.
 
         return tok
 

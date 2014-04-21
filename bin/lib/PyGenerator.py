@@ -21,8 +21,11 @@ _NS_SEPARATOR = "."
 class PyGenerator(GeneratorBase):
     """Generator for Python."""
 
-    def __init__(self, namespace, tm, methods, indent, sfa, outdir, overwrite):
-        super().__init__(namespace, tm, methods, indent, sfa, outdir, overwrite)
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir, overwrite, args):
+        super().__init__(namespace, tm, methods, indent, sfa, outdir, overwrite, args)
+
+    def setup_gen(self):
+        self._validate_ns()
 
         self._enum_read_funcp = "{}enum_read".format(MYRPC_PREFIX)
         self._enum_write_funcp = "{}enum_write".format(MYRPC_PREFIX)
@@ -64,8 +67,6 @@ class PyGenerator(GeneratorBase):
     def gen_types(self):
         self._open(_TYPES_FILENAME)
 
-        self._whdr()
-
         # Do not use from ... import ... statement here, since it can
         # lead to IDL type conflict.
 
@@ -82,8 +83,6 @@ class PyGenerator(GeneratorBase):
 
     def gen_client(self):
         self._open(_CLIENT_FILENAME)
-
-        self._whdr()
 
         # Use Types. prefix to reference the types in Types module (to
         # prevent IDL type conflict).
@@ -104,8 +103,6 @@ class PyGenerator(GeneratorBase):
     def gen_processor(self):
         self._open(_PROCESSOR_FILENAME)
 
-        self._whdr()
-
         # Use Types. prefix to reference the types in Types module (to
         # prevent IDL type conflict).
 
@@ -123,9 +120,11 @@ class PyGenerator(GeneratorBase):
 
         self._close()
 
-    @staticmethod
-    def validate_ns(ns):
-        for comp in ns.split(_NS_SEPARATOR):
+    def _validate_ns_impl(self):
+        if self._namespace == None:
+            raise ValueError()
+
+        for comp in self._namespace.split(_NS_SEPARATOR):
             if not re.match(IDENTIFIER_RE, comp):
                 raise ValueError()
 

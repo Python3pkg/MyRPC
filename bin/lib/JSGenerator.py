@@ -5,7 +5,18 @@ from myrpcgen.GeneratorBase import StructFieldAccess, GeneratorBase, StringBuild
 from myrpcgen.TypeManager import DataTypeKind
 from myrpcgen.InternalException import InternalException
 
-_TYPES_FILENAME = "Types.js"
+class Target:
+    """Specifies JavaScript target."""
+
+    (BROWSER,
+     NODE) = range(2)
+
+_TARGET = "browser" # Default, must be in _TARGET_CHOICES.
+_TARGET_CHOICES = {"browser": Target.BROWSER,
+                   "node":    Target.NODE}
+
+_TYPES_MODULE = "Types"
+_TYPES_FILENAME = "{}.js".format(_TYPES_MODULE)
 _CLIENT_FILENAME = "Client.js"
 _PROCESSOR_FILENAME = "Processor.js"
 _ONCONTINUE = "{}{}".format(MYRPC_PREFIX, "oncontinue")
@@ -14,13 +25,25 @@ _ARGS_RESULT_SERI_SFA = StructFieldAccess.UNDERSCORE
 _STRUCT_READ = "{}read".format(MYRPC_PREFIX)
 _STRUCT_WRITE = "{}write".format(MYRPC_PREFIX)
 _STRUCT_VALIDATE = "{}validate".format(U_MYRPC_PREFIX)
+_NODE_NS = "{}gen".format(MYRPC_PREFIX)
 _NS_SEPARATOR = "."
 
 class JSGenerator(GeneratorBase):
     """Generator for JavaScript."""
 
-    def __init__(self, namespace, tm, methods, indent, sfa, outdir, overwrite):
-        super().__init__(namespace, tm, methods, indent, sfa, outdir, overwrite)
+    def __init__(self, namespace, tm, methods, indent, sfa, outdir, overwrite, args):
+        super().__init__(namespace, tm, methods, indent, sfa, outdir, overwrite, args)
+
+    def setup_gen(self):
+        self._target = _TARGET_CHOICES[self._args.js_target]
+        if self._target == Target.BROWSER:
+            self._validate_ns()
+        elif self._target == Target.NODE:
+            # Node target uses _NODE_NS as namespace.
+
+            self._namespace = _NODE_NS
+        else:
+            raise InternalException("target {} is unknown".format(self._target))
 
         self._dtype_classp = "{}.Types".format(self._namespace)
         self._enum_read_funcp = "{}.{}enum_read".format(self._dtype_classp, MYRPC_PREFIX)
@@ -40,22 +63,31 @@ class JSGenerator(GeneratorBase):
     def gen_types(self):
         self._open(_TYPES_FILENAME)
 
-        self._whdr()
+        # Do target specific namespace creation.
 
-        # Create JavaScript namespace. Types.js should be included first,
-        # before any other generated files.
+        if self._target == Target.BROWSER:
+            # Create JavaScript namespace. Types.js should be included first,
+            # before any other generated files.
+
+            sb = StringBuilder()
+
+            compl = self._namespace.split(_NS_SEPARATOR)
+
+            for i in range(len(compl)):
+                current_namespace = compl[i]
+                parent_namespace = "window" if i == 0 else _NS_SEPARATOR.join(compl[:i])
+
+                sb.wl("if (!(\"{0}\" in {1})) {1}{2}{0} = {{}};".format(current_namespace, parent_namespace, _NS_SEPARATOR))
+
+            sb.we()
+
+            self._ws(sb.get_string())
+        elif self._target == Target.NODE:
+            self._wheader_node(("codec/CodecBase",), True)
+        else:
+            raise InternalException("target {} is unknown".format(self._target))
 
         sb = StringBuilder()
-
-        compl = self._namespace.split(_NS_SEPARATOR)
-
-        for i in range(len(compl)):
-            current_namespace = compl[i]
-            parent_namespace = "window" if i == 0 else _NS_SEPARATOR.join(compl[:i])
-
-            sb.wl("if (!(\"{0}\" in {1})) {1}{2}{0} = {{}};".format(current_namespace, parent_namespace, _NS_SEPARATOR))
-
-        sb.we()
 
         sb.wl("{} = {{}};".format(self._dtype_classp))
         sb.we()
@@ -65,33 +97,54 @@ class JSGenerator(GeneratorBase):
         self._gen_types()
         self._gen_args_result_seri()
 
+        if self._target == Target.NODE:
+            self._wfooter_node()
+
         self._close()
 
     def gen_client(self):
         self._open(_CLIENT_FILENAME)
 
-        self._whdr()
+        if self._target == Target.NODE:
+            self._wheader_node(("util/ClientSubr",), False)
 
         self._gen_client()
         self._gen_exc_handler()
+
+        if self._target == Target.NODE:
+            self._wfooter_node()
 
         self._close()
 
     def gen_processor(self):
         self._open(_PROCESSOR_FILENAME)
 
-        self._whdr()
+        if self._target == Target.NODE:
+            self._wheader_node(("util/ProcessorSubr",), False)
 
         # We don't support abstract interface generation for JavaScript,
         # because the language itself doesn't support it.
 
         self._gen_processor()
 
+        if self._target == Target.NODE:
+            self._wfooter_node()
+
         self._close()
 
     @staticmethod
-    def validate_ns(ns):
-        for comp in ns.split(_NS_SEPARATOR):
+    def setup_argparse(parser):
+        group = parser.add_argument_group("js specific arguments")
+        group.add_argument("--js_target", dest = "js_target",
+                           choices = _TARGET_CHOICES,
+                           default = _TARGET,
+                           help = "code generation target (default: {})".format(_TARGET))
+
+    def _validate_ns_impl(self):
+        if self._namespace == None:
+            raise ValueError()
+
+        for comp in self._namespace.split(_NS_SEPARATOR):
             if not re.match(IDENTIFIER_RE, comp):
                 raise ValueError()
 
@@ -373,6 +426,35 @@ class JSGenerator(GeneratorBase):
             sb.wl("\treturn hr;")
             sb.wl("};")
             sb.we()
+
+        self._ws(sb.get_string())
+
+    def _wheader_node(self, mods, create_ns):
+        sb = StringBuilder()
+
+        sb.wl("(function() {")
+        sb.wl("var myrpc;")
+        sb.wl("var {};".format(self._namespace))
+        sb.we()
+        sb.wl("myrpc = require(\"myrpc-runtime\");")
+
+        for mod in mods:
+            sb.wl("require(\"myrpc-runtime/lib/{}\");".format(mod))
+
+        sb.we()
+        sb.wl("{} = {};".format(self._namespace, "{}" if create_ns else "require(\"./{}\")".format(_TYPES_MODULE)))
+        sb.we()
+        sb.wl("module.exports = {};".format(self._namespace))
+        sb.we()
+
+        self._ws(sb.get_string())
+
+    def _wfooter_node(self):
+        self._strip_extra_nl()
+
+        sb = StringBuilder()
+
+        sb.wl("})();")
 
         self._ws(sb.get_string())
 

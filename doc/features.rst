@@ -1,4 +1,4 @@
-.. TODO: Keep feature list in-sync with setup.py.
+.. TODO: Keep feature list in-sync with README.md.
 
 Features
 ========

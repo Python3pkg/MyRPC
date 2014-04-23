@@ -1,7 +1,7 @@
-def create_config(readme, custom_config):
+def create_config(custom_config):
     # Convert README.md to rst.
 
-    f = open(readme, mode = "rt", encoding = "utf-8")
+    f = open("README.md", mode = "rt", encoding = "utf-8")
     lines = []
 
     for line in f.readlines():

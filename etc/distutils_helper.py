@@ -24,7 +24,7 @@ def create_config(custom_config):
 
     # Create distutils config.
 
-    config = {"version": "0.0.3",
+    config = {"version": "0.0.4-dev",
               "long_description": long_description,
               "author": "Szalai András",
               "author_email": "andrew@bandipapa.com",
@@ -32,12 +32,12 @@ def create_config(custom_config):
               "platforms": "cross-platform",
               "license": "BSD",
               "keywords": "rpc, Python, JavaScript, Node.js, cross-platform, framework",
-              "classifiers": ("Development Status :: 4 - Beta",
+              "classifiers": ["Development Status :: 4 - Beta",
                               "Intended Audience :: Developers",
                               "License :: OSI Approved :: BSD License",
                               "Operating System :: OS Independent",
                               "Programming Language :: Python :: 3.3",
-                              "Topic :: Software Development :: Object Brokering")}
+                              "Topic :: Software Development :: Object Brokering"]}
 
     config.update(custom_config)
 

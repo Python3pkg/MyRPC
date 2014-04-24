@@ -17,8 +17,8 @@ some guidance which namespace the generated stuff will go into::
 
 Explanation:
 
-* One **namespace** declaration is needed per target language we would like
-  to generate code for.
+* In most cases, one **namespace** declaration is required per target
+  language we would like to generate code for.
 * **py** is the name of target language (in this case it is Python). In
   MyRPC terminology it is called generator. For available generators, see
   :ref:`features-target`.
@@ -186,8 +186,8 @@ stub. To do it, execute:
 
 Explanation:
 
-* :option:`-g`: specify which generator to use. A **namespace** declaration is needed for
-  each generator we would like to use, see :ref:`idlintro-namespace`.
+* :option:`-g`: specifies which generator to use. The **namespace** declaration is consulted
+  to determine target language namespace, see :ref:`idlintro-namespace`.
 * :option:`-d`: output directory.
 * :option:`-P`: says that myrpcgen will generate processor stub. The opposite option
   would be :option:`-C`, to generate client stub.

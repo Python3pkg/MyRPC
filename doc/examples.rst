@@ -1,3 +1,5 @@
+.. _examples:
+
 Examples
 ========
 
@@ -8,8 +10,6 @@ Gallery
 -------
 
 Source code: https://github.com/bandipapa/MyRPC/tree/master/examples/gallery.
-
-.. TODO: Sync with examples/gallery/www/index.html.
 
 This is an example demonstrating how you can use MyRPC to create a simple
 web/ajax-based picture gallery application, with Python server and JavaScript
@@ -65,8 +65,6 @@ Chat
 ----
 
 Source code: https://github.com/bandipapa/MyRPC/tree/master/examples/chat.
-
-.. TODO: Sync with examples/chat/www/index.html.
 
 This is an example demonstrating how you can use MyRPC to create a simple
 real-time web application in pure JavaScript (browser-side and Node.js server)

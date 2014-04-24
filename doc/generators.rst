@@ -107,6 +107,9 @@ here:
 JavaScript
 ----------
 
+The following parts describe browser-side behaviour. For Node.js specific
+information, see :ref:`generators-js-node`.
+
 Namespace
 ^^^^^^^^^
 
@@ -197,3 +200,23 @@ here:
 | underscore   | value = obj.get_username(), | obj.set_username(value), |
 |              | value = exc.get_maxsize()   | exc.set_maxsize(value)   |
 +--------------+-----------------------------+--------------------------+
+
+.. _generators-js-node:
+
+Node.js
+^^^^^^^
+
+Using the :option:`--js_target node` option of myrpcgen, you can request code
+generation for Node.js. The generated code will have the following differences
+compared to browser-side code:
+
+* Instead of global symbols, we are using the module concept of Node.js, therefore
+  **namespace** declaration is ignored.
+* *Types* module can be accessed from Node.js:
+
+.. code-block:: js
+
+   var Service = require("outdir/Types");
+   var Types = Service.Types;
+
+   var obj = new Types.UserInfo();

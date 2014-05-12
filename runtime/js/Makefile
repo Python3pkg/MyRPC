@@ -5,7 +5,7 @@ BROWSER_PKG=myrpc-runtime-js-browser
 NODE_DISTDIR=$(BASE_DISTDIR)/node
 NODE_PACKAGE_JSON=package.json
 README=../../README.md
-VERSION=0.0.4-dev
+VERSION=0.0.4
 FILES=$(shell cd $(JS_SRCDIR) && find . -name \*.js)
 
 all:	browser node

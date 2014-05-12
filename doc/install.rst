@@ -18,7 +18,7 @@ is: myrpcgen version and runtime library versions must match. For example,
 if we have some generated code which are generated with myrpcgen version 1.2.3,
 then a runtime library which has the same version (1.2.3) must be used.
 
-The latest stable release of MyRPC is 0.0.3.
+The latest stable release of MyRPC is 0.0.4.
 
 .. _install-myrpcgen:
 

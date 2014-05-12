@@ -24,7 +24,7 @@ def create_config(custom_config):
 
     # Create distutils config.
 
-    config = {"version": "0.0.4-dev",
+    config = {"version": "0.0.4",
               "long_description": long_description,
               "author": "Szalai András",
               "author_email": "andrew@bandipapa.com",

@@ -1,6 +1,6 @@
 {
     "name": "myrpc-runtime",
-    "version": "0.0.4-dev",
+    "version": "0.0.4",
     "description": "MyRPC JavaScript runtime for Node.js",
     "keywords": [
 	"rpc",

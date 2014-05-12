@@ -327,6 +327,7 @@ class JSGenerator(GeneratorBase):
         sb.wl("\treturn finished;");
         sb.wl("};")
         sb.we()
+
         sb.wl("{}.prototype.call_continue = function(func, user_data)".format(self._processor_classn))
         sb.wl("{")
         sb.wl("\tvar finished = this._proc.call_continue(func, user_data);")
@@ -360,7 +361,7 @@ class JSGenerator(GeneratorBase):
             sb.wl("\tvar result_seri;")
             sb.we()
 
-            if len(args) > 0:
+            if len(in_field_names) > 0:
                 sb.wl("\tif (args_seri) {")
 
                 for i in range(len(in_field_names)):

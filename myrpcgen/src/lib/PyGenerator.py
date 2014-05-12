@@ -109,7 +109,7 @@ class PyGenerator(GeneratorBase):
         sb = StringBuilder()
         sb.wl("from abc import ABCMeta, abstractmethod")
         sb.we()
-        sb.wl("from myrpc.util.ProcessorSubr import HandlerReturn, ProcessorSubr")
+        sb.wl("from myrpc.util.ProcessorSubr import HandlerReturn, ProcessorSubr, ProcessorNotFinishedClass")
         sb.we()
         sb.wl("from {} import {}".format(self._namespace, _TYPES_MODULE))
         sb.we()
@@ -307,7 +307,15 @@ class PyGenerator(GeneratorBase):
         sb.we()
 
         sb.wl("\tdef process_one(self, tr, codec):")
-        sb.wl("\t\tself._proc.process_one(tr, codec)")
+        sb.wl("\t\tfinished = self._proc.process_one(tr, codec)")
+        sb.we()
+        sb.wl("\t\treturn finished")
+        sb.we()
+
+        sb.wl("\tdef call_continue(self, func, user_data = None):")
+        sb.wl("\t\tfinished = self._proc.call_continue(func, user_data)")
+        sb.we()
+        sb.wl("\t\treturn finished")
         sb.we()
 
         for method in methods:
@@ -318,23 +326,26 @@ class PyGenerator(GeneratorBase):
             has_excs = len(excs) > 0
             result_seri_classn = self._get_result_seri_classn(name, classn_prefix)
 
-            sb.wl("\tdef _handle_{}(self, args_seri):".format(name))
+            sb.wl("\tdef _handle_{}(self, args_seri, func, user_data):".format(name))
 
             in_field_names = [field.get_name() for field in in_struct.get_fields()]
             args = ["arg_{}".format(in_field_name) for in_field_name in in_field_names]
             argsf = ", ".join(args)
 
-            for i in range(len(in_field_names)):
-                in_field_name = in_field_names[i]
-                arg = args[i]
-                getter_invoke = self._get_struct_field_getter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
-
-                sb.wl("\t\t{}".format(getter_invoke))
-
             if len(in_field_names) > 0:
+                sb.wl("\t\tif args_seri:")
+
+                for i in range(len(in_field_names)):
+                    in_field_name = in_field_names[i]
+                    arg = args[i]
+                    getter_invoke = self._get_struct_field_getter_invoke("args_seri", in_field_name, arg, _ARGS_RESULT_SERI_SFA)
+
+                    sb.wl("\t\t\t{}".format(getter_invoke))
+
                 sb.we()
 
             sb.wl("\t\texc_name = None")
+            sb.wl("\t\tr = None")
             sb.we()
 
             indent = "\t\t"
@@ -343,7 +354,13 @@ class PyGenerator(GeneratorBase):
                 sb.wl("\t\ttry:")
                 indent += "\t"
 
-            sb.wl("{}{}self._impl.{}({})".format(indent, "r = " if has_result else "", name, argsf))
+            # Always check method return value, even if it is declared as void.
+            # If the method would like to do asynchronous execution, then
+            # we have to check for ProcessorNotFinished return value.
+            # Since we are in a try block, be sure that only the called functions
+            # (self._impl.method, func) can throw exceptions.
+
+            sb.wl("{}r = self._impl.{}({}) if args_seri else func(user_data)".format(indent, name, argsf))
 
             for exc in excs:
                 exc_name = exc.get_name()
@@ -357,7 +374,9 @@ class PyGenerator(GeneratorBase):
             sb.wl("\t\thr = HandlerReturn()")
             sb.we()
 
-            sb.wl("\t\tif exc_name != None:")
+            sb.wl("\t\tif isinstance(r, ProcessorNotFinishedClass):")
+            sb.wl("\t\t\thr.set_notfinished()")
+            sb.wl("\t\telif exc_name != None:")
             sb.wl("\t\t\thr.set_exc(exc, exc_name)")
             sb.wl("\t\telse:")
             sb.wl("\t\t\tresult_seri = {}()".format(result_seri_classn))

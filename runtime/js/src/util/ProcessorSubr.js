@@ -52,6 +52,8 @@ myrpc.util.ProcessorSubr = function(methodmap)
 							      myrpc.common.proxy(this._process_CALL_REQUEST, this)];
 
     this._methodmap = methodmap;
+
+    this._reset();
 };
 
 myrpc.util.ProcessorSubr.prototype.process_one = function(tr, codec)

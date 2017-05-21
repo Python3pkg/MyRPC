@@ -20,7 +20,7 @@ class TransportState:
     (READ_BEGIN,
      READ_END,
      WRITE_BEGIN,
-     WRITE_END) = range(4)
+     WRITE_END) = list(range(4))
 
 class TransportBase(metaclass = ABCMeta):
     """Base class for transport implementation classes.

@@ -11,7 +11,7 @@ class StructFieldAccess:
 
     (UNDERSCORE,
      CAPITAL,
-     DIRECT) = range(3)
+     DIRECT) = list(range(3))
 
 class GeneratorBase(metaclass = ABCMeta):
     """Base class for generator implementation classes."""
@@ -118,7 +118,7 @@ class GeneratorBase(metaclass = ABCMeta):
             raise GeneratorException(e)
 
     def _register_dtype_kinds(self, dtype_kinds):
-        for (dtype_kind, info) in dtype_kinds.items():
+        for (dtype_kind, info) in list(dtype_kinds.items()):
             self._gtm.register_dtype_kind(dtype_kind, info)
 
     def _sort_by_name(self, objs):

@@ -12,7 +12,7 @@ class ParserContext:
      ENUM,
      STRUCT,
      EXC,
-     METHOD) = range(5)
+     METHOD) = list(range(5))
 
 class Parser:
     """MyRPC IDL parser implementation."""
@@ -46,7 +46,7 @@ class Parser:
         return self._tm
 
     def get_methods(self):
-        return self._methods.values()
+        return list(self._methods.values())
 
     def _parse(self):
         try:

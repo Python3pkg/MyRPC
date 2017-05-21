@@ -28,7 +28,7 @@ class DataTypeKind:
      # Container types:
      LIST,
      STRUCT,
-     EXC) = range(17)
+     EXC) = list(range(17))
 
 class TypeBase(metaclass = ABCMeta):
     """Base class of all data types."""
@@ -66,7 +66,7 @@ class EnumType(TypeBase):
     def get_entries(self):
         l = []
 
-        for entry in self._entries.items():
+        for entry in list(self._entries.items()):
             l.append(entry)
 
         l_sorted = sorted(l, key = lambda entry: entry[1])
@@ -152,7 +152,7 @@ class Method:
         return self._out_struct
 
     def get_excs(self):
-        return self._excs.values()
+        return list(self._excs.values())
 
     def has_result(self):
         r = (self._out_req != None)
@@ -267,7 +267,7 @@ class TypeManager:
         return r
 
     def list_dtype(self):
-        dtypes = self._dtypes.values()
+        dtypes = list(self._dtypes.values())
 
         return dtypes
 

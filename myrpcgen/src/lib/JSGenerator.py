@@ -9,7 +9,7 @@ class Target:
     """Specifies JavaScript target."""
 
     (BROWSER,
-     NODE) = range(2)
+     NODE) = list(range(2))
 
 _TARGET = "browser" # Default, must be in _TARGET_CHOICES.
 _TARGET_CHOICES = {"browser": Target.BROWSER,

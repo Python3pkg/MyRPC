@@ -15,7 +15,7 @@ class MessageType:
     (CALL_REQUEST,
      CALL_RESPONSE,
      CALL_EXCEPTION,
-     ERROR) = range(4)
+     ERROR) = list(range(4))
 
 class DataType:
     """Data type enum."""
@@ -36,7 +36,7 @@ class DataType:
      ENUM,
      LIST,
      STRUCT,
-     _MAX) = range(17)
+     _MAX) = list(range(17))
 
 class MessageBase(metaclass = ABCMeta):
     """Base class for messages.
